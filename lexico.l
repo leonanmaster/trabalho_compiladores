@@ -16,7 +16,9 @@ NUM {DIGITO}+
 
 {DELIM} 	{}
 
-[+]			{ return *yytext; }
+[+*-/]		{ return *yytext; }
+
+[()]		{ return *yytext; }
 
 {NUM}		{ yylval.label = yytext; return TK_NUM; }
 

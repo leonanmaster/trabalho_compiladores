@@ -25,7 +25,7 @@ string gentempcode();
 
 %start S
 
-%left '+'
+%left '+' '-' '*' '/'
 
 %%
 
@@ -42,16 +42,55 @@ S 			: E
 			}
 			;
 
-E 			: E '+' E
+E 			:E '-' T
+			{
+				$$.label = gentempcode();
+				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label +
+					" = " + $1.label + " - " + $3.label + ";\n";
+			} 
+
+			|E '+' T
 			{
 				$$.label = gentempcode();
 				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label +
 					" = " + $1.label + " + " + $3.label + ";\n";
 			}
-			| TK_NUM
+	
+			| T
+			{
+				$$.label = $1.label;
+				$$.traducao = $1.traducao;
+			}
+			;
+
+T 			: T '*' F
+			{
+				$$.label = gentempcode();
+				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label +
+					" = " + $1.label + " * " + $3.label + ";\n";
+			}
+			
+			| T '/' F
+			{
+				$$.label = gentempcode();
+				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label +
+					" = " + $1.label + " / " + $3.label + ";\n";
+			}
+			| F
+			{
+				$$.label = $1.label;
+				$$.traducao = $1.traducao;
+			}
+		
+F 			: TK_NUM
 			{
 				$$.label = gentempcode();
 				$$.traducao = "\t" + $$.label + " = " + $1.label + ";\n";
+			}
+			| '(' E ')'
+			{
+				$$.label = $2.label;
+				$$.traducao = $2.traducao;
 			}
 			;
 

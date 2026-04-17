@@ -54,11 +54,14 @@ test-%: glf
 	echo "---"; \
 	./glf < $$foca; \
 	echo "---"; \
-	if diff <(./glf < $$foca 2>/dev/null) $$expected > /dev/null 2>&1; then \
+	temp=/tmp/foca_temp_$$ ; \
+	if ./glf < $$foca 2>/dev/null > $$temp && diff $$temp $$expected > /dev/null 2>&1; then \
+		rm -f $$temp ; \
 		echo "PASS"; \
 	else \
 		echo "FAIL - Diferenca:"; \
-		diff <(./glf < $$foca 2>/dev/null) $$expected; \
+		./glf < $$foca 2>/dev/null > $$temp && diff $$temp $$expected ; \
+		rm -f $$temp ; \
 	fi
 
 clean:
