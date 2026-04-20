@@ -21,15 +21,15 @@ void yyerror(string);
 string gentempcode();
 %}
 
-%token TK_NUM
+%token TK_NUM TK_ID
 
 %start S
 
-%left '+' '-' '*' '/'
+%left '+' '-' '*' '/' '='
 
 %%
 
-S 			: E
+S 			: PROGRAMA
 			{
 				codigo_gerado = "/*Compilador FOCA*/\n"
 								"#include <stdio.h>\n"
@@ -47,6 +47,15 @@ S 			: E
 							"\n}\n";
 			}
 			;
+
+PROGRAMA    : CMD	{$$.traducao = $1.traducao;}
+			| E  	{$$.traducao = $1.traducao;}
+			;
+
+CMD         : TK_ID '=' E
+			{
+				$$.traducao = $3.traducao + "\t" + $1.label + " = " + $3.label + ";\n";
+			}
 
 E 			:E '-' T
 			{
@@ -89,6 +98,11 @@ T 			: T '*' F
 			}
 		
 F 			: TK_NUM
+			{
+				$$.label = gentempcode();
+				$$.traducao = "\t" + $$.label + " = " + $1.label + ";\n";
+			}
+			| TK_ID
 			{
 				$$.label = gentempcode();
 				$$.traducao = "\t" + $$.label + " = " + $1.label + ";\n";
