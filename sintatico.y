@@ -1,6 +1,7 @@
 %{
 #include <iostream>
 #include <string>
+#include <map>
 
 #define YYSTYPE atributos
 
@@ -16,12 +17,20 @@ struct atributos
 	string traducao;
 };
 
+struct variavel
+{
+	string nome_usuario;
+	string nome_sistema;
+	int    valor;	
+};
+map<string, variavel> variaveis;
+
 int yylex(void);
 void yyerror(string);
 string gentempcode();
 %}
 
-%token TK_NUM TK_ID
+%token TK_NUM TK_ID TK_INT
 
 %start S
 
@@ -29,7 +38,7 @@ string gentempcode();
 
 %%
 
-S 			: PROGRAMA
+S 			: COMANDOS
 			{
 				codigo_gerado = "/*Compilador FOCA*/\n"
 								"#include <stdio.h>\n"
@@ -48,14 +57,23 @@ S 			: PROGRAMA
 			}
 			;
 
-PROGRAMA    : CMD	{$$.traducao = $1.traducao;}
-			| E  	{$$.traducao = $1.traducao;}
+COMANDOS    : COMANDO COMANDOS	{$$.traducao = $1.traducao + $2.traducao;}
+		    | COMANDO 			{$$.traducao = $1.traducao;}
 			;
 
-CMD         : TK_ID '=' E
+COMANDO     : TK_ID '=' E
 			{
-				$$.traducao = $3.traducao + "\t" + $1.label + " = " + $3.label + ";\n";
+				variavel var = variaveis[$1.label];
+				$$.traducao = $3.traducao + "\t" + var.nome_sistema + " = " + $3.label + ";\n";
 			}
+			| TK_INT TK_ID ';'
+			{
+				variavel var;
+				var.nome_usuario = $2.label;
+				var.nome_sistema = gentempcode();
+				variaveis[var.nome_usuario] = var;
+			}
+			|E  	{$$.traducao = $1.traducao;}
 
 E 			:E '-' T
 			{
@@ -104,8 +122,8 @@ F 			: TK_NUM
 			}
 			| TK_ID
 			{
-				$$.label = gentempcode();
-				$$.traducao = "\t" + $$.label + " = " + $1.label + ";\n";
+				variavel var = variaveis[$1.label];
+				$$.label     = var.nome_sistema;
 			}
 			| '(' E ')'
 			{
