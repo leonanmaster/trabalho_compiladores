@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 #include <map>
+#include <vector>
 
 #define YYSTYPE atributos
 
@@ -17,6 +18,14 @@ struct atributos
 	string traducao;
 };
 
+struct literal
+{
+	string label;
+	char   tipo;
+};
+
+vector<literal> literais;
+
 struct variavel
 {
 	string nome_usuario;
@@ -27,10 +36,10 @@ map<string, variavel> variaveis;
 
 int yylex(void);
 void yyerror(string);
-string gentempcode();
+string gentempcode(char tipo);
 %}
 
-%token TK_NUM TK_ID TK_INT
+%token TK_NUM TK_ID TK_INT TK_FLOAT
 
 %start S
 
@@ -44,8 +53,12 @@ S 			: COMANDOS
 								"#include <stdio.h>\n"
 								"int main(void) {\n";
 				
-				for (int i = 1; i <= var_temp_qnt; i++){
-					codigo_gerado += "\tint t" + to_string(i) + ";\n";
+				for (int i = 0; i < var_temp_qnt; i++){
+					if (literais[i].tipo == 'i') {
+						codigo_gerado += "\tint " + literais[i].label + ";\n";
+					} else if (literais[i].tipo == 'f') {
+						codigo_gerado += "\tfloat " + literais[i].label + ";\n";
+					}
 				}
 
 				codigo_gerado += "\n";
@@ -70,21 +83,21 @@ COMANDO     : TK_ID '=' E
 			{
 				variavel var;
 				var.nome_usuario = $2.label;
-				var.nome_sistema = gentempcode();
+				var.nome_sistema = gentempcode('i');
 				variaveis[var.nome_usuario] = var;
 			}
 			|E  	{$$.traducao = $1.traducao;}
 
 E 			:E '-' T
 			{
-				$$.label = gentempcode();
+				$$.label = gentempcode('i');
 				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label +
 					" = " + $1.label + " - " + $3.label + ";\n";
 			} 
 
 			|E '+' T
 			{
-				$$.label = gentempcode();
+				$$.label = gentempcode('i');
 				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label +
 					" = " + $1.label + " + " + $3.label + ";\n";
 			}
@@ -98,14 +111,14 @@ E 			:E '-' T
 
 T 			: T '*' F
 			{
-				$$.label = gentempcode();
+				$$.label = gentempcode('i');
 				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label +
 					" = " + $1.label + " * " + $3.label + ";\n";
 			}
 			
 			| T '/' F
 			{
-				$$.label = gentempcode();
+				$$.label = gentempcode('i');
 				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label +
 					" = " + $1.label + " / " + $3.label + ";\n";
 			}
@@ -117,7 +130,12 @@ T 			: T '*' F
 		
 F 			: TK_NUM
 			{
-				$$.label = gentempcode();
+				$$.label = gentempcode('i');
+				$$.traducao = "\t" + $$.label + " = " + $1.label + ";\n";
+			}
+			| TK_FLOAT
+			{
+				$$.label = gentempcode('f');
 				$$.traducao = "\t" + $$.label + " = " + $1.label + ";\n";
 			}
 			| TK_ID
@@ -138,10 +156,18 @@ F 			: TK_NUM
 
 int yyparse();
 
-string gentempcode()
+string gentempcode(char tipo)
 {
 	var_temp_qnt++;
-	return "t" + to_string(var_temp_qnt);
+	string label = "t" + to_string(var_temp_qnt);
+
+	literal lit;
+	lit.label = label;
+	lit.tipo = tipo;
+
+	literais.push_back(lit);
+
+	return label;
 }
 
 int main(int argc, char* argv[])
