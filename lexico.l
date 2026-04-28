@@ -8,6 +8,7 @@ ESPACO [ \t]
 DIGITO [0-9]
 LETRA [a-zA-Z]
 
+
 DELIM {ESPACO}+
 NUM_FLOAT {DIGITO}+"."{DIGITO}+
 NUM {DIGITO}+
@@ -20,7 +21,7 @@ ID {LETRA}({LETRA}|{DIGITO})*
 
 {DELIM} 	{}
 
-[+*-/=;]		{ return *yytext; }
+[+*-/=;<>]		{ return *yytext; }
 
 [()]		{ return *yytext; }
 
@@ -41,7 +42,6 @@ ID {LETRA}({LETRA}|{DIGITO})*
 "false"     { yylval.label = "0"; return TK_BOOL_LIT; }
 
 "bool"      { return TK_BOOL; }
-
 
 {ID}		{ yylval.label = yytext; return TK_ID; }
 

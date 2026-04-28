@@ -33,7 +33,7 @@ void yyerror(string);
 string gentempcode();
 %}
 
-%token TK_NUM TK_ID TK_INT TK_NUM_FLOAT TK_CHAR TK_CARACTER TK_BOOL TK_BOOL_LIT
+%token TK_NUM TK_ID TK_INT TK_NUM_FLOAT TK_CHAR TK_CARACTER TK_BOOL TK_BOOL_LIT TK_MENOR_IGUAL TK_MAIOR_IGUAL TK_IGUAL_IGUAL TK_DIFERENTE TK_MENOR TK_MAIOR
 
 %start S
 
@@ -74,6 +74,12 @@ COMANDOS    : COMANDO COMANDOS	{$$.traducao = $1.traducao + $2.traducao;}
 COMANDO     : TK_ID '=' E ';'
 			{
 				variavel var = variaveis[$1.label];
+
+				if(var.tipo == "bool" && var.nome_sistema == "") {
+					var.nome_sistema = gentempcode();
+					tipos_temporarios[var.nome_sistema] = "int";
+				}
+
 				$$.traducao = $3.traducao + "\t" + var.nome_sistema + " = " + $3.label + ";\n";
 			}
 			| TK_INT TK_ID ';'
@@ -88,11 +94,11 @@ COMANDO     : TK_ID '=' E ';'
 
 				$$.traducao = "";
 			}
-			| | TK_BOOL TK_ID ';'
+			|TK_BOOL TK_ID ';'
 			{
 				variavel var;
 				var.nome_usuario = $2.label;
-				var.nome_sistema = gentempcode();
+				var.nome_sistema = "";
 				var.tipo = "bool";
 
 				variaveis[var.nome_usuario] = var;
@@ -119,7 +125,21 @@ E 			:E '-' T
 				$$.tipo = ($1.tipo == "float" || $3.tipo == "float") ? "float" : "int";
 				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label +
 					" = " + $1.label + " - " + $3.label + ";\n";
-			} 
+			}
+			|E '<' T
+			{
+				$$.label = gentempcode();
+				$$.tipo = "bool";
+				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label +
+				 " = " + $1.label + " < " + $3.label + ";\n";
+			}
+			|E '>' T
+			{
+				$$.label = gentempcode();
+				$$.tipo = "bool";
+				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label +
+				 " = " + $1.label + " > " + $3.label + ";\n";
+			}
 
 			|E '+' T
 			{
