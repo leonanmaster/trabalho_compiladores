@@ -9,6 +9,7 @@ DIGITO [0-9]
 LETRA [a-zA-Z]
 
 DELIM {ESPACO}+
+NUM_FLOAT {DIGITO}+"."{DIGITO}+
 NUM {DIGITO}+
 ID {LETRA}({LETRA}|{DIGITO})*
 
@@ -21,6 +22,8 @@ ID {LETRA}({LETRA}|{DIGITO})*
 [+*-/=;]		{ return *yytext; }
 
 [()]		{ return *yytext; }
+
+{NUM_FLOAT} {yylval.label = yytext; return TK_NUM_FLOAT;}
 
 {NUM}		{ yylval.label = yytext; return TK_NUM; }
 

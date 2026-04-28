@@ -15,22 +15,24 @@ struct atributos
 {
 	string label;
 	string traducao;
+	string tipo;
 };
 
 struct variavel
 {
 	string nome_usuario;
 	string nome_sistema;
-	int    valor;	
+	string tipo;	
 };
 map<string, variavel> variaveis;
+map<string,string> tipos_temporarios;
 
 int yylex(void);
 void yyerror(string);
 string gentempcode();
 %}
 
-%token TK_NUM TK_ID TK_INT
+%token TK_NUM TK_ID TK_INT TK_NUM_FLOAT
 
 %start S
 
@@ -45,7 +47,14 @@ S 			: COMANDOS
 								"int main(void) {\n";
 				
 				for (int i = 1; i <= var_temp_qnt; i++){
-					codigo_gerado += "\tint t" + to_string(i) + ";\n";
+					string nome_temp = "t" + to_string(i);
+					string tipo_temp = "int";
+
+					if (tipos_temporarios.count(nome_temp) > 0) {
+						tipo_temp = tipos_temporarios[nome_temp];
+					}
+
+					codigo_gerado += "\t" + tipo_temp + " " + nome_temp + ";\n";
 				}
 
 				codigo_gerado += "\n";
@@ -71,13 +80,19 @@ COMANDO     : TK_ID '=' E
 				variavel var;
 				var.nome_usuario = $2.label;
 				var.nome_sistema = gentempcode();
+				var.tipo = "int";
+
 				variaveis[var.nome_usuario] = var;
+				tipos_temporarios[var.nome_sistema] = var.tipo;
+
+				$$.traducao = "";
 			}
 			|E  	{$$.traducao = $1.traducao;}
 
 E 			:E '-' T
 			{
 				$$.label = gentempcode();
+				$$.tipo = ($1.tipo == "float" || $3.tipo == "float") ? "float" : "int";
 				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label +
 					" = " + $1.label + " - " + $3.label + ";\n";
 			} 
@@ -85,6 +100,7 @@ E 			:E '-' T
 			|E '+' T
 			{
 				$$.label = gentempcode();
+				$$.tipo = ($1.tipo == "float" || $3.tipo == "float") ? "float" : "int";
 				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label +
 					" = " + $1.label + " + " + $3.label + ";\n";
 			}
@@ -93,19 +109,30 @@ E 			:E '-' T
 			{
 				$$.label = $1.label;
 				$$.traducao = $1.traducao;
+				$$.tipo = $1.tipo;
 			}
 			;
 
 T 			: T '*' F
 			{
+				string operando_esq = $1.label;
+				string operando_dir = $3.label;
+
+				if ($3.tipo == "float" && $1.tipo != "float") {
+					operando_esq = $3.label;
+					operando_dir = $1.label;
+				}
+
 				$$.label = gentempcode();
+				$$.tipo = ($1.tipo == "float" || $3.tipo == "float") ? "float" : "int";
 				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label +
-					" = " + $1.label + " * " + $3.label + ";\n";
+					" = " + operando_esq + " * " + operando_dir + ";\n";
 			}
 			
 			| T '/' F
 			{
 				$$.label = gentempcode();
+				$$.tipo = ($1.tipo == "float" || $3.tipo == "float") ? "float" : "int";
 				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label +
 					" = " + $1.label + " / " + $3.label + ";\n";
 			}
@@ -113,22 +140,35 @@ T 			: T '*' F
 			{
 				$$.label = $1.label;
 				$$.traducao = $1.traducao;
+				$$.tipo = $1.tipo;
 			}
 		
 F 			: TK_NUM
 			{
 				$$.label = gentempcode();
+				$$.tipo = "int";
+				tipos_temporarios[$$.label] = $$.tipo;
+				$$.traducao = "\t" + $$.label + " = " + $1.label + ";\n";
+			}
+			| TK_NUM_FLOAT
+			{
+				$$.label = gentempcode();
+				$$.tipo = "float";
+				tipos_temporarios[$$.label] = $$.tipo;
 				$$.traducao = "\t" + $$.label + " = " + $1.label + ";\n";
 			}
 			| TK_ID
 			{
 				variavel var = variaveis[$1.label];
 				$$.label     = var.nome_sistema;
+				$$.tipo = var.tipo;
+				$$.traducao = "";
 			}
 			| '(' E ')'
 			{
 				$$.label = $2.label;
 				$$.traducao = $2.traducao;
+				$$.tipo = $2.tipo;
 			}
 			;
 
