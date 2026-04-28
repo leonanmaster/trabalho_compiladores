@@ -11,6 +11,7 @@ LETRA [a-zA-Z]
 DELIM {ESPACO}+
 NUM_FLOAT {DIGITO}+"."{DIGITO}+
 NUM {DIGITO}+
+CARACTERE_CHAR "'"({LETRA}|{ESPACO})"'"
 ID {LETRA}({LETRA}|{DIGITO})*
 
 %%
@@ -23,11 +24,24 @@ ID {LETRA}({LETRA}|{DIGITO})*
 
 [()]		{ return *yytext; }
 
+
+
 {NUM_FLOAT} {yylval.label = yytext; return TK_NUM_FLOAT;}
+
+{CARACTERE_CHAR} {yylval.label = yytext; return TK_CARACTER;}
+
+"char"     {return TK_CHAR;}
 
 {NUM}		{ yylval.label = yytext; return TK_NUM; }
 
 "int"       { return TK_INT; }
+
+"true"      { yylval.label = "1"; return TK_BOOL_LIT; }
+
+"false"     { yylval.label = "0"; return TK_BOOL_LIT; }
+
+"bool"      { return TK_BOOL; }
+
 
 {ID}		{ yylval.label = yytext; return TK_ID; }
 

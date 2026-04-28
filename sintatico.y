@@ -4,7 +4,8 @@
 #include <map>
 
 #define YYSTYPE atributos
-
+#define true 1
+#define false 0
 using namespace std;
 
 int var_temp_qnt;
@@ -32,7 +33,7 @@ void yyerror(string);
 string gentempcode();
 %}
 
-%token TK_NUM TK_ID TK_INT TK_NUM_FLOAT
+%token TK_NUM TK_ID TK_INT TK_NUM_FLOAT TK_CHAR TK_CARACTER TK_BOOL TK_BOOL_LIT
 
 %start S
 
@@ -70,7 +71,7 @@ COMANDOS    : COMANDO COMANDOS	{$$.traducao = $1.traducao + $2.traducao;}
 		    | COMANDO 			{$$.traducao = $1.traducao;}
 			;
 
-COMANDO     : TK_ID '=' E
+COMANDO     : TK_ID '=' E ';'
 			{
 				variavel var = variaveis[$1.label];
 				$$.traducao = $3.traducao + "\t" + var.nome_sistema + " = " + $3.label + ";\n";
@@ -86,6 +87,29 @@ COMANDO     : TK_ID '=' E
 				tipos_temporarios[var.nome_sistema] = var.tipo;
 
 				$$.traducao = "";
+			}
+			| | TK_BOOL TK_ID ';'
+			{
+				variavel var;
+				var.nome_usuario = $2.label;
+				var.nome_sistema = gentempcode();
+				var.tipo = "bool";
+
+				variaveis[var.nome_usuario] = var;
+				tipos_temporarios[var.nome_sistema] = "int";
+
+				$$.traducao = "";
+			}
+
+			| TK_CHAR TK_ID ';'
+			{
+				variavel var;
+				var.nome_usuario = $2.label;
+				var.nome_sistema = gentempcode();
+				var.tipo = "char";
+
+				variaveis[var.nome_usuario] = var;
+				tipos_temporarios[var.nome_sistema] = var.tipo;
 			}
 			|E  	{$$.traducao = $1.traducao;}
 
@@ -143,7 +167,20 @@ T 			: T '*' F
 				$$.tipo = $1.tipo;
 			}
 		
-F 			: TK_NUM
+F 			: TK_CARACTER
+			{
+				$$.label = $1.label;
+				$$.tipo = "char";
+				$$.traducao = "";
+			}
+			| TK_BOOL_LIT
+			{
+				$$.label = $1.label;
+				$$.tipo = "bool";
+				$$.traducao = "";
+			}
+			|
+			TK_NUM
 			{
 				$$.label = gentempcode();
 				$$.tipo = "int";
