@@ -33,7 +33,7 @@ void yyerror(string);
 string gentempcode();
 %}
 
-%token TK_NUM TK_ID TK_INT TK_NUM_FLOAT TK_CHAR TK_CARACTER TK_BOOL TK_BOOL_LIT TK_MENOR_IGUAL TK_MAIOR_IGUAL TK_IGUAL_IGUAL TK_DIFERENTE TK_MENOR TK_MAIOR
+%token TK_NUM TK_ID TK_INT TK_NUM_FLOAT TK_CHAR TK_CARACTER TK_BOOL TK_BOOL_LIT TK_MENOR_IGUAL TK_MAIOR_IGUAL TK_IGUAL_IGUAL TK_DIFERENTE TK_MENOR TK_MAIOR TK_AND
 
 %start S
 
@@ -133,6 +133,14 @@ E 			:E '-' T
 				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label +
 				 " = " + $1.label + " < " + $3.label + ";\n";
 			}
+			|E TK_AND T
+			{
+				$1.label = gentempcode();
+				$$.label = gentempcode();
+				$$.tipo = "bool";
+				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label +
+				 " = " + $1.label + " && " + $3.label + ";\n";
+			}
 			|E '>' T
 			{
 				$$.label = gentempcode();
@@ -140,7 +148,6 @@ E 			:E '-' T
 				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label +
 				 " = " + $1.label + " > " + $3.label + ";\n";
 			}
-
 			|E '+' T
 			{
 				$$.label = gentempcode();
@@ -186,7 +193,15 @@ T 			: T '*' F
 				$$.traducao = $1.traducao;
 				$$.tipo = $1.tipo;
 			}
-		
+			| '!' F
+			{
+				$2.label = gentempcode();
+				$$.label = gentempcode();
+
+				$$.tipo = "bool";
+				tipos_temporarios[$$.label] = "int";
+				$$.traducao = $2.traducao + "\t" + $$.label + " = !" + $2.label + ";\n";
+			}
 F 			: TK_CARACTER
 			{
 				$$.label = $1.label;
