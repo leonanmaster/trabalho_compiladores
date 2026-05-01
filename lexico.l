@@ -42,6 +42,8 @@ ID {LETRA}({LETRA}|{DIGITO})*
 
 "bool"      { return TK_BOOL; }
 
+"float"     { return TK_FLOAT; }
+
 "&&"      { return TK_AND; }
 
 {ID}		{ yylval.label = yytext; return TK_ID; }

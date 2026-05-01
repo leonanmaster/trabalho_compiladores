@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 #include <map>
+#include <utility>
 
 #define YYSTYPE atributos
 #define true 1
@@ -11,7 +12,7 @@ using namespace std;
 int var_temp_qnt;
 int linha = 1;
 string codigo_gerado;
-
+string cast;
 struct atributos
 {
 	string label;
@@ -25,15 +26,26 @@ struct variavel
 	string nome_sistema;
 	string tipo;	
 };
+
 map<string, variavel> variaveis;
 map<string,string> tipos_temporarios;
+map<pair<string,string>, string> tabela_de_conversao = {
+    {{"int","int"}, "int"},
+    {{"int","float"}, "float"},
+    {{"float","int"}, "float"},
+    {{"float","float"}, "float"}
+};
+
 
 int yylex(void);
 void yyerror(string);
 string gentempcode();
+bool precisa_materializar(const atributos&);
+void materializa_operando(atributos&, string&);
+void converte_para_float(atributos&, string&);
 %}
 
-%token TK_NUM TK_ID TK_INT TK_NUM_FLOAT TK_CHAR TK_CARACTER TK_BOOL TK_BOOL_LIT TK_MENOR_IGUAL TK_MAIOR_IGUAL TK_IGUAL_IGUAL TK_DIFERENTE TK_MENOR TK_MAIOR TK_AND
+%token TK_NUM TK_ID TK_INT TK_NUM_FLOAT TK_CHAR TK_CARACTER TK_BOOL TK_BOOL_LIT TK_MENOR_IGUAL TK_MAIOR_IGUAL TK_IGUAL_IGUAL TK_DIFERENTE TK_MENOR TK_MAIOR TK_AND TK_FLOAT
 
 %start S
 
@@ -80,6 +92,11 @@ COMANDO     : TK_ID '=' E ';'
 					tipos_temporarios[var.nome_sistema] = "int";
 				}
 
+				if(var.tipo == "float" && var.nome_sistema == "") {
+					var.nome_sistema = gentempcode();
+					tipos_temporarios[var.nome_sistema] = "float";
+				}
+
 				$$.traducao = $3.traducao + "\t" + var.nome_sistema + " = " + $3.label + ";\n";
 			}
 			| TK_INT TK_ID ';'
@@ -106,6 +123,18 @@ COMANDO     : TK_ID '=' E ';'
 
 				$$.traducao = "";
 			}
+			| TK_FLOAT TK_ID ';'
+			{
+				variavel var;
+				var.nome_usuario = $2.label;
+				var.nome_sistema = "";
+				var.tipo = "float";
+
+				variaveis[var.nome_usuario] = var;
+				tipos_temporarios[var.nome_sistema] = "int";
+
+				$$.traducao = "";
+			}
 
 			| TK_CHAR TK_ID ';'
 			{
@@ -121,10 +150,27 @@ COMANDO     : TK_ID '=' E ';'
 
 E 			:E '-' T
 			{
+				atributos esq = $1;
+				atributos dir = $3;
+				string traducao = "";
+
+				cast = tabela_de_conversao[{esq.tipo, dir.tipo}];
+
+				materializa_operando(esq, traducao);
+				if (cast == "float" && esq.tipo == "int") {
+					converte_para_float(esq, traducao);
+				}
+
+				materializa_operando(dir, traducao);
+				if (cast == "float" && dir.tipo == "int") {
+					converte_para_float(dir, traducao);
+				}
+
 				$$.label = gentempcode();
-				$$.tipo = ($1.tipo == "float" || $3.tipo == "float") ? "float" : "int";
-				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label +
-					" = " + $1.label + " - " + $3.label + ";\n";
+				$$.tipo = cast;
+				tipos_temporarios[$$.label] = $$.tipo;
+				$$.traducao = traducao + "\t" + $$.label +
+					" = " + esq.label + " - " + dir.label + ";\n";
 			}
 			|E '<' T
 			{
@@ -150,10 +196,27 @@ E 			:E '-' T
 			}
 			|E '+' T
 			{
+				atributos esq = $1;
+				atributos dir = $3;
+				string traducao = "";
+
+				cast = tabela_de_conversao[{esq.tipo, dir.tipo}];
+
+				materializa_operando(esq, traducao);
+				if (cast == "float" && esq.tipo == "int") {
+					converte_para_float(esq, traducao);
+				}
+
+				materializa_operando(dir, traducao);
+				if (cast == "float" && dir.tipo == "int") {
+					converte_para_float(dir, traducao);
+				}
+
 				$$.label = gentempcode();
-				$$.tipo = ($1.tipo == "float" || $3.tipo == "float") ? "float" : "int";
-				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label +
-					" = " + $1.label + " + " + $3.label + ";\n";
+				$$.tipo = cast;
+				tipos_temporarios[$$.label] = $$.tipo;
+				$$.traducao = traducao + "\t" + $$.label +
+					" = " + esq.label + " + " + dir.label + ";\n";
 			}
 	
 			| T
@@ -166,26 +229,52 @@ E 			:E '-' T
 
 T 			: T '*' F
 			{
-				string operando_esq = $1.label;
-				string operando_dir = $3.label;
+				atributos esq = $1;
+				atributos dir = $3;
+				string traducao = "";
 
-				if ($3.tipo == "float" && $1.tipo != "float") {
-					operando_esq = $3.label;
-					operando_dir = $1.label;
+				cast = tabela_de_conversao[{esq.tipo, dir.tipo}];
+
+				materializa_operando(esq, traducao);
+				if (cast == "float" && esq.tipo == "int") {
+					converte_para_float(esq, traducao);
+				}
+
+				materializa_operando(dir, traducao);
+				if (cast == "float" && dir.tipo == "int") {
+					converte_para_float(dir, traducao);
 				}
 
 				$$.label = gentempcode();
-				$$.tipo = ($1.tipo == "float" || $3.tipo == "float") ? "float" : "int";
-				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label +
-					" = " + operando_esq + " * " + operando_dir + ";\n";
+				$$.tipo = cast;
+				tipos_temporarios[$$.label] = $$.tipo;
+				$$.traducao = traducao + "\t" + $$.label +
+					" = " + esq.label + " * " + dir.label + ";\n";
 			}
 			
 			| T '/' F
 			{
+				atributos esq = $1;
+				atributos dir = $3;
+				string traducao = "";
+
+				cast = tabela_de_conversao[{esq.tipo, dir.tipo}];
+
+				materializa_operando(esq, traducao);
+				if (cast == "float" && esq.tipo == "int") {
+					converte_para_float(esq, traducao);
+				}
+
+				materializa_operando(dir, traducao);
+				if (cast == "float" && dir.tipo == "int") {
+					converte_para_float(dir, traducao);
+				}
+
 				$$.label = gentempcode();
-				$$.tipo = ($1.tipo == "float" || $3.tipo == "float") ? "float" : "int";
-				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label +
-					" = " + $1.label + " / " + $3.label + ";\n";
+				$$.tipo = cast;
+				tipos_temporarios[$$.label] = $$.tipo;
+				$$.traducao = traducao + "\t" + $$.label +
+					" = " + esq.label + " / " + dir.label + ";\n";
 			}
 			| F
 			{
@@ -224,10 +313,9 @@ F 			: TK_CARACTER
 			}
 			| TK_NUM_FLOAT
 			{
-				$$.label = gentempcode();
+				$$.label = $1.label;
 				$$.tipo = "float";
-				tipos_temporarios[$$.label] = $$.tipo;
-				$$.traducao = "\t" + $$.label + " = " + $1.label + ";\n";
+				$$.traducao = "";
 			}
 			| TK_ID
 			{
@@ -254,6 +342,35 @@ string gentempcode()
 {
 	var_temp_qnt++;
 	return "t" + to_string(var_temp_qnt);
+}
+
+bool precisa_materializar(const atributos& valor)
+{
+	return valor.traducao.empty() && !valor.label.empty() && valor.label[0] != 't';
+}
+
+void materializa_operando(atributos& valor, string& traducao)
+{
+	if (!valor.traducao.empty()) {
+		traducao += valor.traducao;
+		return;
+	}
+
+	if (precisa_materializar(valor)) {
+		string literal = valor.label;
+		valor.label = gentempcode();
+		tipos_temporarios[valor.label] = valor.tipo;
+		traducao += "\t" + valor.label + " = " + literal + ";\n";
+	}
+}
+
+void converte_para_float(atributos& valor, string& traducao)
+{
+	string origem = valor.label;
+	valor.label = gentempcode();
+	valor.tipo = "float";
+	tipos_temporarios[valor.label] = valor.tipo;
+	traducao += "\t" + valor.label + " = (float) " + origem + ";\n";
 }
 
 int main(int argc, char* argv[])
