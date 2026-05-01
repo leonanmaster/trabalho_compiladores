@@ -45,7 +45,7 @@ void materializa_operando(atributos&, string&);
 void converte_para_float(atributos&, string&);
 %}
 
-%token TK_NUM TK_ID TK_INT TK_NUM_FLOAT TK_CHAR TK_CARACTER TK_BOOL TK_BOOL_LIT TK_MENOR_IGUAL TK_MAIOR_IGUAL TK_IGUAL_IGUAL TK_DIFERENTE TK_MENOR TK_MAIOR TK_AND TK_FLOAT
+%token TK_NUM TK_ID TK_INT TK_NUM_FLOAT TK_CHAR TK_CARACTER TK_BOOL TK_BOOL_LIT TK_MENOR_IGUAL TK_MAIOR_IGUAL TK_IGUAL_IGUAL TK_DIFERENTE TK_MENOR TK_MAIOR TK_AND TK_FLOAT TK_CAST_INT
 
 %start S
 
@@ -85,29 +85,35 @@ COMANDOS    : COMANDO COMANDOS	{$$.traducao = $1.traducao + $2.traducao;}
 
 COMANDO     : TK_ID '=' E ';'
 			{
-				variavel var = variaveis[$1.label];
+				string destino = $1.label;
 
-				if(var.tipo == "bool" && var.nome_sistema == "") {
-					var.nome_sistema = gentempcode();
-					tipos_temporarios[var.nome_sistema] = "int";
+				if (variaveis.count($1.label) > 0) {
+					variavel var = variaveis[$1.label];
+
+					if (var.nome_sistema == "") {
+						var.nome_sistema = gentempcode();
+
+						if (var.tipo == "bool") {
+							tipos_temporarios[var.nome_sistema] = "int";
+						} else {
+							tipos_temporarios[var.nome_sistema] = var.tipo;
+						}
+					}
+
+					variaveis[$1.label] = var;
+					destino = var.nome_sistema;
 				}
 
-				if(var.tipo == "float" && var.nome_sistema == "") {
-					var.nome_sistema = gentempcode();
-					tipos_temporarios[var.nome_sistema] = "float";
-				}
-
-				$$.traducao = $3.traducao + "\t" + var.nome_sistema + " = " + $3.label + ";\n";
+				$$.traducao = $3.traducao + "\t" + destino + " = " + $3.label + ";\n";
 			}
 			| TK_INT TK_ID ';'
 			{
 				variavel var;
 				var.nome_usuario = $2.label;
-				var.nome_sistema = gentempcode();
+				var.nome_sistema = "";
 				var.tipo = "int";
 
 				variaveis[var.nome_usuario] = var;
-				tipos_temporarios[var.nome_sistema] = var.tipo;
 
 				$$.traducao = "";
 			}
@@ -119,7 +125,6 @@ COMANDO     : TK_ID '=' E ';'
 				var.tipo = "bool";
 
 				variaveis[var.nome_usuario] = var;
-				tipos_temporarios[var.nome_sistema] = "int";
 
 				$$.traducao = "";
 			}
@@ -131,7 +136,6 @@ COMANDO     : TK_ID '=' E ';'
 				var.tipo = "float";
 
 				variaveis[var.nome_usuario] = var;
-				tipos_temporarios[var.nome_sistema] = "int";
 
 				$$.traducao = "";
 			}
@@ -140,11 +144,11 @@ COMANDO     : TK_ID '=' E ';'
 			{
 				variavel var;
 				var.nome_usuario = $2.label;
-				var.nome_sistema = gentempcode();
+				var.nome_sistema = "";
 				var.tipo = "char";
 
 				variaveis[var.nome_usuario] = var;
-				tipos_temporarios[var.nome_sistema] = var.tipo;
+				$$.traducao = "";
 			}
 			|E  	{$$.traducao = $1.traducao;}
 
@@ -217,6 +221,20 @@ E 			:E '-' T
 				tipos_temporarios[$$.label] = $$.tipo;
 				$$.traducao = traducao + "\t" + $$.label +
 					" = " + esq.label + " + " + dir.label + ";\n";
+			}
+			| TK_CAST_INT T
+			{
+				atributos temp;
+				temp.label = gentempcode();
+				temp.tipo = $2.tipo;
+				temp.traducao = "";
+				tipos_temporarios[temp.label] = temp.tipo;
+				$$.label = gentempcode();
+				$$.tipo = "int";
+				tipos_temporarios[$$.label] = "int";
+				
+				$$.traducao = $2.traducao + "\t" + temp.label + " = " + $2.label + ";\n\t" +  $$.label + " = " + "(int) " + temp.label + ";\n";
+
 			}
 	
 			| T
@@ -319,9 +337,27 @@ F 			: TK_CARACTER
 			}
 			| TK_ID
 			{
-				variavel var = variaveis[$1.label];
-				$$.label     = var.nome_sistema;
-				$$.tipo = var.tipo;
+				if (variaveis.count($1.label) > 0) {
+					variavel var = variaveis[$1.label];
+
+					if (var.nome_sistema == "") {
+						var.nome_sistema = gentempcode();
+
+						if (var.tipo == "bool") {
+							tipos_temporarios[var.nome_sistema] = "int";
+						} else {
+							tipos_temporarios[var.nome_sistema] = var.tipo;
+						}
+					}
+
+					variaveis[$1.label] = var;
+					$$.label = var.nome_sistema;
+					$$.tipo = var.tipo;
+				} else {
+					$$.label = $1.label;
+					$$.tipo = "int";
+				}
+
 				$$.traducao = "";
 			}
 			| '(' E ')'
