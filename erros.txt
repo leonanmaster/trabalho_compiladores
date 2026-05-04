@@ -1,1 +1,2 @@
 função que verifica validade das operações
+

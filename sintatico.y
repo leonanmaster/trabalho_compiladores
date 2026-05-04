@@ -24,11 +24,12 @@ struct variavel
 {
 	string nome_usuario;
 	string nome_sistema;
-	string tipo;	
+	string tipo;
 };
 
 map<string, variavel> variaveis;
-map<string,string> tipos_temporarios;
+map<string,string> tipos_temporarios; /* Esta tabela mapeia o nome da var temporaria (t1, t2 etc) pro tipo dela. */
+
 map<pair<string,string>, string> tabela_de_conversao = {
     {{"int","int"}, "int"},
     {{"int","float"}, "float"},
@@ -39,13 +40,13 @@ map<pair<string,string>, string> tabela_de_conversao = {
 
 int yylex(void);
 void yyerror(string);
-string gentempcode();
+string gentempcode(string tipo);
 bool precisa_materializar(const atributos&);
 void materializa_operando(atributos&, string&);
 void converte_para_float(atributos&, string&);
 %}
 
-%token TK_NUM TK_ID TK_INT TK_NUM_FLOAT TK_CHAR TK_CARACTER TK_BOOL TK_BOOL_LIT TK_MENOR_IGUAL TK_MAIOR_IGUAL TK_IGUAL_IGUAL TK_DIFERENTE TK_MENOR TK_MAIOR TK_AND TK_OR TK_FLOAT TK_CAST_INT
+%token TK_NUM TK_ID TK_INT TK_NUM_FLOAT TK_CHAR TK_CARACTER TK_BOOL TK_BOOL_LIT TK_MENOR_IGUAL TK_MAIOR_IGUAL TK_IGUAL_IGUAL TK_DIFERENTE TK_MENOR TK_MAIOR TK_AND TK_OR TK_FLOAT TK_CAST_INT CARACTERE_CHAR
 
 %start S
 
@@ -61,13 +62,9 @@ S 			: COMANDOS
 				
 				for (int i = 1; i <= var_temp_qnt; i++){
 					string nome_temp = "t" + to_string(i);
-					string tipo_temp = "int";
+					string tipo = tipos_temporarios[nome_temp];
 
-					if (tipos_temporarios.count(nome_temp) > 0) {
-						tipo_temp = tipos_temporarios[nome_temp];
-					}
-
-					codigo_gerado += "\t" + tipo_temp + " " + nome_temp + ";\n";
+					codigo_gerado += "\t" + tipo + " " + nome_temp + ";\n";
 				}
 
 				codigo_gerado += "\n";
@@ -85,46 +82,17 @@ COMANDOS    : COMANDO COMANDOS	{$$.traducao = $1.traducao + $2.traducao;}
 
 COMANDO     : TK_ID '=' E ';'
 			{
-				string destino = $1.label;
-
-				if (variaveis.count($1.label) > 0) {
-					variavel var = variaveis[$1.label];
-
-					if (var.nome_sistema == "") {
-						var.nome_sistema = gentempcode();
-
-						if (var.tipo == "bool") {
-							tipos_temporarios[var.nome_sistema] = "int";
-						} else {
-							tipos_temporarios[var.nome_sistema] = var.tipo;
-						}
-					}
-
-					variaveis[$1.label] = var;
-					destino = var.nome_sistema;
-				}
-
-				$$.traducao = $3.traducao + "\t" + destino + " = " + $3.label + ";\n";
+				variavel var = variaveis[$1.label];
+				$$.traducao = $3.traducao + "\t" + var.nome_sistema + " = " + $3.label + ";\n";
 			}
 			| TK_INT TK_ID ';'
 			{
 				variavel var;
 				var.nome_usuario = $2.label;
-				var.nome_sistema = "";
+				var.nome_sistema = gentempcode("int");
 				var.tipo = "int";
-
 				variaveis[var.nome_usuario] = var;
 
-				$$.traducao = "";
-			}
-			|TK_BOOL TK_ID ';'
-			{
-				variavel var;
-				var.nome_usuario = $2.label;
-				var.nome_sistema = "";
-				var.tipo = "bool";
-
-				variaveis[var.nome_usuario] = var;
 
 				$$.traducao = "";
 			}
@@ -132,7 +100,7 @@ COMANDO     : TK_ID '=' E ';'
 			{
 				variavel var;
 				var.nome_usuario = $2.label;
-				var.nome_sistema = "";
+				var.nome_sistema = gentempcode("float");
 				var.tipo = "float";
 
 				variaveis[var.nome_usuario] = var;
@@ -144,7 +112,7 @@ COMANDO     : TK_ID '=' E ';'
 			{
 				variavel var;
 				var.nome_usuario = $2.label;
-				var.nome_sistema = "";
+				var.nome_sistema = gentempcode("char");
 				var.tipo = "char";
 
 				variaveis[var.nome_usuario] = var;
@@ -154,156 +122,39 @@ COMANDO     : TK_ID '=' E ';'
 
 E 			:E '-' T
 			{
-				atributos esq = $1;
-				atributos dir = $3;
-				string traducao = "";
+				/* O tipo de $$ dependerá dos tipos dos operandos. POR HORA, VOU COLOCAR INT. Mas precisará checar os tipos */
+				$$.label = gentempcode("int");
 
-				cast = tabela_de_conversao[{esq.tipo, dir.tipo}];
-
-				materializa_operando(esq, traducao);
-				if (cast == "float" && esq.tipo == "int") {
-					converte_para_float(esq, traducao);
-				}
-
-				materializa_operando(dir, traducao);
-				if (cast == "float" && dir.tipo == "int") {
-					converte_para_float(dir, traducao);
-				}
-
-				$$.label = gentempcode();
-				$$.tipo = cast;
-				tipos_temporarios[$$.label] = $$.tipo;
-				$$.traducao = traducao + "\t" + $$.label +
-					" = " + esq.label + " - " + dir.label + ";\n";
-			}
-			|E '<' T
-			{
-				$$.label = gentempcode();
-				$$.tipo = "bool";
 				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label +
-				 " = " + $1.label + " < " + $3.label + ";\n";
-			}
-			|E TK_AND T
-			{
-				if !($1.tipo == 'bool' && $3.tipo == 'bool' ) {
-					
-				}
-				$1.label = gentempcode();
-				$$.label = gentempcode();
-				$$.tipo = "bool";
-				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label +
-				 " = " + $1.label + " && " + $3.label + ";\n";
-			}
-			|E TK_OR T
-			{
-				$1.label = gentempcode();
-				$$.label = gentempcode();
-				$$.tipo = "bool";
-				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label +
-				 " = " + $1.label + " || " + $3.label + ";\n";
-			}
-			|E '>' T
-			{
-				$$.label = gentempcode();
-				$$.tipo = "bool";
-				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label +
-				 " = " + $1.label + " > " + $3.label + ";\n";
+					" = " + $1.label + " - " + $3.label + ";\n";
 			}
 			|E '+' T
 			{
-				atributos esq = $1;
-				atributos dir = $3;
-				string traducao = "";
+				$$.label = gentempcode("int");
 
-				cast = tabela_de_conversao[{esq.tipo, dir.tipo}];
-
-				materializa_operando(esq, traducao);
-				if (cast == "float" && esq.tipo == "int") {
-					converte_para_float(esq, traducao);
-				}
-
-				materializa_operando(dir, traducao);
-				if (cast == "float" && dir.tipo == "int") {
-					converte_para_float(dir, traducao);
-				}
-
-				$$.label = gentempcode();
-				$$.tipo = cast;
-				tipos_temporarios[$$.label] = $$.tipo;
-				$$.traducao = traducao + "\t" + $$.label +
-					" = " + esq.label + " + " + dir.label + ";\n";
-			}
-			| TK_CAST_INT T
-			{
-				atributos temp;
-				temp.label = gentempcode();
-				temp.tipo = $2.tipo;
-				temp.traducao = "";
-				tipos_temporarios[temp.label] = temp.tipo;
-				$$.label = gentempcode();
-				$$.tipo = "int";
-				tipos_temporarios[$$.label] = "int";
-				
-				$$.traducao = $2.traducao + "\t" + temp.label + " = " + $2.label + ";\n\t" +  $$.label + " = " + "(int) " + temp.label + ";\n";
-
+				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label +
+					" = " + $1.label + " + " + $3.label + ";\n";
 			}
 	
 			| T
 			{
 				$$.label = $1.label;
 				$$.traducao = $1.traducao;
-				$$.tipo = $1.tipo;
 			}
 			;
 
 T 			: T '*' F
 			{
-				atributos esq = $1;
-				atributos dir = $3;
-				string traducao = "";
-
-				cast = tabela_de_conversao[{esq.tipo, dir.tipo}];
-
-				materializa_operando(esq, traducao);
-				if (cast == "float" && esq.tipo == "int") {
-					converte_para_float(esq, traducao);
-				}
-
-				materializa_operando(dir, traducao);
-				if (cast == "float" && dir.tipo == "int") {
-					converte_para_float(dir, traducao);
-				}
-
-				$$.label = gentempcode();
-				$$.tipo = cast;
-				tipos_temporarios[$$.label] = $$.tipo;
-				$$.traducao = traducao + "\t" + $$.label +
-					" = " + esq.label + " * " + dir.label + ";\n";
+				$$.label = gentempcode("int");
+				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label +
+					" = " + $1.label + " * " + $3.label + ";\n";
 			}
 			
 			| T '/' F
 			{
-				atributos esq = $1;
-				atributos dir = $3;
-				string traducao = "";
-
-				cast = tabela_de_conversao[{esq.tipo, dir.tipo}];
-
-				materializa_operando(esq, traducao);
-				if (cast == "float" && esq.tipo == "int") {
-					converte_para_float(esq, traducao);
-				}
-
-				materializa_operando(dir, traducao);
-				if (cast == "float" && dir.tipo == "int") {
-					converte_para_float(dir, traducao);
-				}
-
-				$$.label = gentempcode();
-				$$.tipo = cast;
-				tipos_temporarios[$$.label] = $$.tipo;
-				$$.traducao = traducao + "\t" + $$.label +
-					" = " + esq.label + " / " + dir.label + ";\n";
+				$$.label = gentempcode("int");
+				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label +
+					" = " + $1.label + " / " + $3.label + ";\n";
 			}
 			| F
 			{
@@ -311,65 +162,33 @@ T 			: T '*' F
 				$$.traducao = $1.traducao;
 				$$.tipo = $1.tipo;
 			}
-			| '!' F
-			{
-				$2.label = gentempcode();
-				$$.label = gentempcode();
+			;
 
-				$$.tipo = "bool";
-				tipos_temporarios[$$.label] = "int";
-				$$.traducao = $2.traducao + "\t" + $$.label + " = !" + $2.label + ";\n";
-			}
-F 			: TK_CARACTER
+F 			: TK_NUM
 			{
-				$$.label = $1.label;
-				$$.tipo = "char";
-				$$.traducao = "";
-			}
-			| TK_BOOL_LIT
-			{
-				$$.label = $1.label;
-				$$.tipo = "bool";
-				$$.traducao = "";
-			}
-			|
-			TK_NUM
-			{
-				$$.label = gentempcode();
+				$$.label = gentempcode("int");
 				$$.tipo = "int";
 				tipos_temporarios[$$.label] = $$.tipo;
 				$$.traducao = "\t" + $$.label + " = " + $1.label + ";\n";
 			}
 			| TK_NUM_FLOAT
 			{
-				$$.label = $1.label;
+				$$.label = gentempcode("float");
 				$$.tipo = "float";
-				$$.traducao = "";
+				tipos_temporarios[$$.label] = $$.tipo;
+				$$.traducao = "\t" + $$.label + " = " + $1.label + ";\n";
 			}
 			| TK_ID
 			{
-				if (variaveis.count($1.label) > 0) {
-					variavel var = variaveis[$1.label];
-
-					if (var.nome_sistema == "") {
-						var.nome_sistema = gentempcode();
-
-						if (var.tipo == "bool") {
-							tipos_temporarios[var.nome_sistema] = "int";
-						} else {
-							tipos_temporarios[var.nome_sistema] = var.tipo;
-						}
-					}
-
-					variaveis[$1.label] = var;
-					$$.label = var.nome_sistema;
-					$$.tipo = var.tipo;
-				} else {
-					$$.label = $1.label;
-					$$.tipo = "int";
-				}
-
-				$$.traducao = "";
+				/* VERIFICAR SE JÁ ESTÁ DECLARADA */
+				variavel var = variaveis[$1.label];
+				$$.label = var.nome_sistema;
+			}
+			| CARACTERE_CHAR
+			{
+				/* VERIFICAR SE JÁ ESTÁ DECLARADA */
+				variavel var = variaveis[$1.label];
+				$$.label = var.nome_sistema;
 			}
 			| '(' E ')'
 			{
@@ -385,40 +204,15 @@ F 			: TK_CARACTER
 
 int yyparse();
 
-string gentempcode()
+string gentempcode(string tipo)
 {
 	var_temp_qnt++;
-	return "t" + to_string(var_temp_qnt);
+	string nome = "t" + to_string(var_temp_qnt);
+	tipos_temporarios[nome] = tipo;
+
+	return nome;
 }
 
-bool precisa_materializar(const atributos& valor)
-{
-	return valor.traducao.empty() && !valor.label.empty() && valor.label[0] != 't';
-}
-
-void materializa_operando(atributos& valor, string& traducao)
-{
-	if (!valor.traducao.empty()) {
-		traducao += valor.traducao;
-		return;
-	}
-
-	if (precisa_materializar(valor)) {
-		string literal = valor.label;
-		valor.label = gentempcode();
-		tipos_temporarios[valor.label] = valor.tipo;
-		traducao += "\t" + valor.label + " = " + literal + ";\n";
-	}
-}
-
-void converte_para_float(atributos& valor, string& traducao)
-{
-	string origem = valor.label;
-	valor.label = gentempcode();
-	valor.tipo = "float";
-	tipos_temporarios[valor.label] = valor.tipo;
-	traducao += "\t" + valor.label + " = (float) " + origem + ";\n";
-}
 
 int main(int argc, char* argv[])
 {

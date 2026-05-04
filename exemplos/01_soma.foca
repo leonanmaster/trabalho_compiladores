@@ -1,0 +1,4 @@
+int a;
+float b;
+b = 2.5;
+a = 1.0 / b;
