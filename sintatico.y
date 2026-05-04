@@ -45,7 +45,7 @@ void materializa_operando(atributos&, string&);
 void converte_para_float(atributos&, string&);
 %}
 
-%token TK_NUM TK_ID TK_INT TK_NUM_FLOAT TK_CHAR TK_CARACTER TK_BOOL TK_BOOL_LIT TK_MENOR_IGUAL TK_MAIOR_IGUAL TK_IGUAL_IGUAL TK_DIFERENTE TK_MENOR TK_MAIOR TK_AND TK_FLOAT TK_CAST_INT
+%token TK_NUM TK_ID TK_INT TK_NUM_FLOAT TK_CHAR TK_CARACTER TK_BOOL TK_BOOL_LIT TK_MENOR_IGUAL TK_MAIOR_IGUAL TK_IGUAL_IGUAL TK_DIFERENTE TK_MENOR TK_MAIOR TK_AND TK_OR TK_FLOAT TK_CAST_INT
 
 %start S
 
@@ -185,11 +185,22 @@ E 			:E '-' T
 			}
 			|E TK_AND T
 			{
+				if !($1.tipo == 'bool' && $3.tipo == 'bool' ) {
+					
+				}
 				$1.label = gentempcode();
 				$$.label = gentempcode();
 				$$.tipo = "bool";
 				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label +
 				 " = " + $1.label + " && " + $3.label + ";\n";
+			}
+			|E TK_OR T
+			{
+				$1.label = gentempcode();
+				$$.label = gentempcode();
+				$$.tipo = "bool";
+				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label +
+				 " = " + $1.label + " || " + $3.label + ";\n";
 			}
 			|E '>' T
 			{

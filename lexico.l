@@ -7,10 +7,11 @@
 ESPACO [ \t]
 DIGITO [0-9]
 LETRA [a-zA-Z]
+SINAL [+-]
 
 DELIM {ESPACO}+
-NUM_FLOAT {DIGITO}+"."{DIGITO}+
-NUM {DIGITO}+
+NUM_FLOAT {SINAL}?{DIGITO}+"."{DIGITO}+
+NUM {SINAL}?{DIGITO}+
 CARACTERE_CHAR "'"({LETRA}|{ESPACO})"'"
 ID {LETRA}({LETRA}|{DIGITO})*
 
@@ -47,6 +48,8 @@ ID {LETRA}({LETRA}|{DIGITO})*
 "(int)"   { return TK_CAST_INT; }
 
 "&&"      { return TK_AND; }
+
+"||"      { return TK_OR; }
 
 {ID}		{ yylval.label = yytext; return TK_ID; }
 
