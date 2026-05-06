@@ -46,7 +46,7 @@ void materializa_operando(atributos&, string&);
 void converte_para_float(atributos&, string&);
 %}
 
-%token TK_NUM TK_ID TK_INT TK_NUM_FLOAT TK_CHAR TK_CARACTER TK_BOOL TK_BOOL_LIT TK_MENOR_IGUAL TK_MAIOR_IGUAL TK_IGUAL_IGUAL TK_DIFERENTE TK_MENOR TK_MAIOR TK_AND TK_OR TK_FLOAT TK_CAST_INT
+%token TK_NUM TK_ID TK_INT TK_NUM_FLOAT TK_CHAR TK_CARACTER TK_BOOL TK_BOOL_LIT TK_OPERADOR_RELACIONAL TK_NOT TK_AND TK_OR TK_FLOAT TK_CAST_INT
 
 %start S
 
@@ -80,7 +80,7 @@ COMANDOS    : COMANDO COMANDOS	{$$.traducao = $1.traducao + $2.traducao;}
 		    | COMANDO 			{$$.traducao = $1.traducao;}
 			;
 
-COMANDO     : TK_ID '=' E ';'
+COMANDO     : TK_ID '=' L ';'
 			{
 				variavel var = variaveis[$1.label];
 				$$.traducao = $3.traducao + "\t" + var.nome_sistema + " = " + $3.label + ";\n";
@@ -118,8 +118,62 @@ COMANDO     : TK_ID '=' E ';'
 				variaveis[var.nome_usuario] = var;
 				$$.traducao = "";
 			}
+			| TK_BOOL TK_ID ';'
+			{
+				/* TENTAR COLOCAR ISSO NUMA FUNÇÃO */
+				variavel var;
+				var.nome_usuario = $2.label;
+				var.nome_sistema = gentempcode("int");
+				var.tipo = "bool";
+
+				variaveis[var.nome_usuario] = var;
+				$$.traducao = "";
+			}
+			|L  	{$$.traducao = $1.traducao;}
+			;
+/* or -> and -> not */
+L			: L TK_OR K
+			{
+				$$.label = gentempcode("int");
+				tipos_temporarios[$$.label] = "int";
+				$$.tipo = "bool";
+				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label + " = " + $1.label + " || " + $3.label + ";\n";
+			}
+			|K   {$$.traducao = $1.traducao;}
+			;
+
+K			: K TK_AND M
+			{
+				$$.label = gentempcode("int");
+				tipos_temporarios[$$.label] = "int";
+				$$.tipo = "bool";
+				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label + " = " + $1.label + " && " + $3.label + ";\n";
+			}
+			|M   {$$.traducao = $1.traducao;}
+			;
+
+M			: TK_NOT M
+			{
+				$$.label = gentempcode("int");
+				tipos_temporarios[$$.label] = "int";
+				$$.tipo = "bool";
+				$$.traducao = $2.traducao + "\t" + $$.label + " = !" + $2.label + ";\n";
+			}
+			|R   {$$.traducao = $1.traducao;}
+			;
+
+R			: R TK_OPERADOR_RELACIONAL E
+			{
+				$$.label = gentempcode("int");
+				tipos_temporarios[$$.label] = "int";
+				$$.tipo = "bool";
+				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label + " = " + $1.label + " " + $2.label + " " + $3.label + ";\n";
+			}
+					/* VAI TER QUE SETAR O TIPO DE E, PARA FAZER AS VALIDAÇÕES DE OPERAÇÕES */
 			|E  	{$$.traducao = $1.traducao;}
 
+			;
+			/* FAZER A MESMA COISA QUE NO RELACIONAL, CRIAR TK_OPERACOES_SOMA_SUB SLA */
 E 			:E '-' T
 			{
 				/* O tipo de $$ dependerá dos tipos dos operandos. POR HORA, VOU COLOCAR INT. Mas precisará checar os tipos */
@@ -192,7 +246,15 @@ F 			: TK_NUM
 				$$.traducao = "\t" + $$.label + " = " + $1.label + ";\n";
 
 			}
-			| '(' E ')'
+			| TK_BOOL_LIT
+			{
+				$$.label = gentempcode("int");
+				$$.tipo  = "bool";
+				tipos_temporarios[$$.label] = "int";
+				$$.traducao = "\t" + $$.label + " = " + $1.label + ";\n";
+
+			}
+			| '(' L ')'
 			{
 				$$.label = $2.label;
 				$$.traducao = $2.traducao;

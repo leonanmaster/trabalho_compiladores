@@ -15,13 +15,22 @@ NUM {SINAL}?{DIGITO}+
 CARACTERE_CHAR "'"({LETRA}|{ESPACO}|{DIGITO})"'"
 ID {LETRA}({LETRA}|{DIGITO})*
 
+IGUAL_IGUAL "=="
+MAIOR_QUE ">"
+MENOR_QUE "<"
+MAIOR_IGUAL ">="
+MENOR_IGUAL "<="
+DIFERENTE "!="
+
+OPERADOR_RELACIONAL {IGUAL_IGUAL}|{MAIOR_QUE}|{MENOR_QUE}|{MAIOR_IGUAL}|{MENOR_IGUAL}|{DIFERENTE}
+
 %%
 
 "\n"		{ linha++; }
 
 {DELIM} 	{}
 
-[+*-/=;<>!]		{ return *yytext; }
+[+*-/=;]		{ return *yytext; }
 
 [()]		{ return *yytext; }
 
@@ -32,6 +41,8 @@ ID {LETRA}({LETRA}|{DIGITO})*
 {CARACTERE_CHAR} {yylval.label = yytext; return TK_CARACTER;}
 
 "char"     {return TK_CHAR;}
+
+{OPERADOR_RELACIONAL} { yylval.label = yytext; return TK_OPERADOR_RELACIONAL; }
 
 {NUM}		{ yylval.label = yytext; return TK_NUM; }
 
@@ -47,9 +58,9 @@ ID {LETRA}({LETRA}|{DIGITO})*
 
 "(int)"   { return TK_CAST_INT; }
 
-"&&"      { return TK_AND; }
-
-"||"      { return TK_OR; }
+"not"       { yylval.label = yytext; return TK_NOT; }
+"and"       { yylval.label = yytext; return TK_AND; }
+"or"        { yylval.label = yytext; return TK_OR; }
 
 {ID}		{ yylval.label = yytext; return TK_ID; }
 

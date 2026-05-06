@@ -1,2 +1,2 @@
-char a;
-a = '1';
+bool x;
+x = not not ((1+2) < 2);
