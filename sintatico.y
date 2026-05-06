@@ -46,7 +46,7 @@ void materializa_operando(atributos&, string&);
 void converte_para_float(atributos&, string&);
 %}
 
-%token TK_NUM TK_ID TK_INT TK_NUM_FLOAT TK_CHAR TK_CARACTER TK_BOOL TK_BOOL_LIT TK_MENOR_IGUAL TK_MAIOR_IGUAL TK_IGUAL_IGUAL TK_DIFERENTE TK_MENOR TK_MAIOR TK_AND TK_OR TK_FLOAT TK_CAST_INT CARACTERE_CHAR
+%token TK_NUM TK_ID TK_INT TK_NUM_FLOAT TK_CHAR TK_CARACTER TK_BOOL TK_BOOL_LIT TK_MENOR_IGUAL TK_MAIOR_IGUAL TK_IGUAL_IGUAL TK_DIFERENTE TK_MENOR TK_MAIOR TK_AND TK_OR TK_FLOAT TK_CAST_INT
 
 %start S
 
@@ -184,11 +184,13 @@ F 			: TK_NUM
 				variavel var = variaveis[$1.label];
 				$$.label = var.nome_sistema;
 			}
-			| CARACTERE_CHAR
+			| TK_CARACTER
 			{
-				/* VERIFICAR SE JÁ ESTÁ DECLARADA */
-				variavel var = variaveis[$1.label];
-				$$.label = var.nome_sistema;
+				$$.label = gentempcode("char");
+				$$.tipo  = "char";
+				tipos_temporarios[$$.label] = $$.tipo;
+				$$.traducao = "\t" + $$.label + " = " + $1.label + ";\n";
+
 			}
 			| '(' E ')'
 			{
