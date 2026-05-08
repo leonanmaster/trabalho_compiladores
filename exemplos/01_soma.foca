@@ -1,2 +1,4 @@
-bool x;
-x = not not ((1+2) < 2);
+int F;
+int I;
+I = 1;
+F = I / 2.5;

@@ -57,6 +57,7 @@ OPERADOR_RELACIONAL {IGUAL_IGUAL}|{MAIOR_QUE}|{MENOR_QUE}|{MAIOR_IGUAL}|{MENOR_I
 "float"     { return TK_FLOAT; }
 
 "(int)"   { return TK_CAST_INT; }
+"(float)" { return TK_CAST_FLOAT; }
 
 "not"       { yylval.label = yytext; return TK_NOT; }
 "and"       { yylval.label = yytext; return TK_AND; }

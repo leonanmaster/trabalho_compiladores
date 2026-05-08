@@ -21,3 +21,8 @@ x = t < k;
 
 bool x;
 x = not not ((1+2) < 2);
+
+float F;
+int I;
+I = 10;
+F = I + 2.5;

@@ -34,19 +34,33 @@ map<pair<string,string>, string> tabela_de_conversao = {
     {{"int","int"}, "int"},
     {{"int","float"}, "float"},
     {{"float","int"}, "float"},
-    {{"float","float"}, "float"}
+    {{"float","float"}, "float"},
+    {{"int","char"}, ""},
+	{{"char","int"}, ""}, 
+	{{"float","char"}, ""}, 
+	{{"char","float"}, ""},
+	{{"char","char"}, ""},
+	{{"bool","bool"}, ""},
+	{{"int","bool"}, ""},
+	{{"bool","int"}, ""},
+	{{"float","bool"}, ""},
+	{{"bool","float"}, ""},
+	{{"char","bool"}, ""},
+	{{"bool","char"}, ""}
+	/* caso nao queria que seja possivel operar dois tipos, deixe o resultado como string vazia */
 };
 
 
 int yylex(void);
 void yyerror(string);
 string gentempcode(string tipo);
+atributos gera_operacao(atributos recebedor_resultado, atributos esq, atributos dir, string operador);
 bool precisa_materializar(const atributos&);
 void materializa_operando(atributos&, string&);
 void converte_para_float(atributos&, string&);
 %}
 
-%token TK_NUM TK_ID TK_INT TK_NUM_FLOAT TK_CHAR TK_CARACTER TK_BOOL TK_BOOL_LIT TK_OPERADOR_RELACIONAL TK_NOT TK_AND TK_OR TK_FLOAT TK_CAST_INT
+%token TK_NUM TK_ID TK_INT TK_NUM_FLOAT TK_CHAR TK_CARACTER TK_BOOL TK_BOOL_LIT TK_OPERADOR_RELACIONAL TK_NOT TK_AND TK_OR TK_FLOAT TK_CAST_INT TK_CAST_FLOAT
 
 %start S
 
@@ -176,39 +190,29 @@ R			: R TK_OPERADOR_RELACIONAL E
 			/* FAZER A MESMA COISA QUE NO RELACIONAL, CRIAR TK_OPERACOES_SOMA_SUB SLA */
 E 			:E '-' T
 			{
-				/* O tipo de $$ dependerá dos tipos dos operandos. POR HORA, VOU COLOCAR INT. Mas precisará checar os tipos */
-				$$.label = gentempcode("int");
-
-				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label +
-					" = " + $1.label + " - " + $3.label + ";\n";
+				$$ = gera_operacao($$, $1, $3, "-");
 			}
 			|E '+' T
 			{
-				$$.label = gentempcode("int");
-
-				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label +
-					" = " + $1.label + " + " + $3.label + ";\n";
+				$$ = gera_operacao($$, $1, $3, "+");
 			}
 	
 			| T
 			{
 				$$.label = $1.label;
 				$$.traducao = $1.traducao;
+				$$.tipo = $1.tipo;
 			}
 			;
 
 T 			: T '*' F
 			{
-				$$.label = gentempcode("int");
-				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label +
-					" = " + $1.label + " * " + $3.label + ";\n";
+				$$ = gera_operacao($$, $1, $3, "*");
 			}
 			
 			| T '/' F
 			{
-				$$.label = gentempcode("int");
-				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label +
-					" = " + $1.label + " / " + $3.label + ";\n";
+				$$ = gera_operacao($$, $1, $3, "/");
 			}
 			| F
 			{
@@ -233,11 +237,13 @@ F 			: TK_NUM
 				$$.traducao = "\t" + $$.label + " = " + $1.label + ";\n";
 			}
 			| TK_ID
-			{
-				/* VERIFICAR SE JÁ ESTÁ DECLARADA */
-				variavel var = variaveis[$1.label];
-				$$.label = var.nome_sistema;
-			}
+				{
+					/* VERIFICAR SE JÁ ESTÁ DECLARADA */
+					variavel var = variaveis[$1.label];
+					$$.label = var.nome_sistema;
+					$$.tipo = var.tipo;
+					$$.traducao = "";
+				}
 			| TK_CARACTER
 			{
 				$$.label = gentempcode("char");
@@ -275,6 +281,41 @@ string gentempcode(string tipo)
 	tipos_temporarios[nome] = tipo;
 
 	return nome;
+}
+
+atributos gera_operacao(atributos recebedor_resultado, atributos esq, atributos dir, string operador)
+{
+	atributos resultado;
+	string tipo_resultado = tabela_de_conversao[{esq.tipo, dir.tipo}];
+
+	if (tipo_resultado == "") {
+		yyerror("tipos incompatíveis: " + esq.tipo + " e " + dir.tipo);
+		return resultado;
+	}
+
+	resultado.label = gentempcode(tipo_resultado);
+	resultado.tipo = tipo_resultado;
+	resultado.traducao = esq.traducao + dir.traducao;
+
+	string label_esq = esq.label;
+	string label_dir = dir.label;
+
+	if (esq.tipo != tipo_resultado) {
+		label_esq = gentempcode(tipo_resultado);
+		resultado.traducao += "\t" + label_esq + " = (" + tipo_resultado + ") " + esq.label + ";\n";
+	}
+
+	if (dir.tipo != tipo_resultado) {
+		label_dir = gentempcode(tipo_resultado);
+		resultado.traducao += "\t" + label_dir + " = (" + tipo_resultado + ") " + dir.label + ";\n";
+	}
+	if (recebedor_resultado.tipo != resultado.tipo) {
+		yyerror("tipo do resultado da operação é incompatível com o tipo esperado: " + resultado.tipo + " e " + recebedor_resultado.tipo);
+	}
+
+	resultado.traducao += "\t" + resultado.label + " = " + label_esq + " " + operador + " " + label_dir + ";\n";
+
+	return resultado;
 }
 
 
