@@ -54,6 +54,7 @@ map<pair<string,string>, string> tabela_de_conversao = {
 int yylex(void);
 void yyerror(string);
 string gentempcode(string tipo);
+variavel obtem_variavel(string nome);
 atributos gera_operacao(atributos recebedor_resultado, atributos esq, atributos dir, string operador);
 bool precisa_materializar(const atributos&);
 void materializa_operando(atributos&, string&);
@@ -95,15 +96,14 @@ COMANDOS    : COMANDO COMANDOS	{$$.traducao = $1.traducao + $2.traducao;}
 			;
 
 COMANDO     : TK_ID '=' L ';'
-			{
-				variavel var_recebedora = variaveis[$1.label];
-				if (var_recebedora.tipo != $3.tipo) {
-					yyerror("tipo do resultado da operação é incompatível com o tipo esperado: " + $3.tipo + " e " + var_recebedora.tipo);
-				} else {
-					variavel var = variaveis[$1.label];
-					$$.traducao = $3.traducao + "\t" + var.nome_sistema + " = " + $3.label + ";\n";
+				{
+					variavel var_recebedora = obtem_variavel($1.label);
+					if (var_recebedora.tipo != $3.tipo) {
+						yyerror("tipo do resultado da operação é incompatível com o tipo esperado: " + $3.tipo + " e " + var_recebedora.tipo);
+					} else {
+						$$.traducao = $3.traducao + "\t" + var_recebedora.nome_sistema + " = " + $3.label + ";\n";
+					}
 				}
-			}
 			| TK_INT TK_ID ';'
 			{
 				variavel var;
@@ -148,31 +148,31 @@ COMANDO     : TK_ID '=' L ';'
 				$$.traducao = "";
 			}
 			|L  	{$$.traducao = $1.traducao;}
-			| TK_ID '=' TK_CAST_FLOAT TK_ID ';'
-			{
-				variavel var_recebedora = variaveis[$1.label];
-				if (var_recebedora.tipo != "float") {
-					yyerror("tipo incompatível para cast: " + var_recebedora.tipo);
-				}
-				else {
-					variavel var_fonte = variaveis[$4.label];
-					$$.tipo = "float";
-					$$.traducao = "\t" + var_recebedora.nome_sistema + " = (float) " + var_fonte.nome_sistema + ";\n";
-					var_recebedora.tipo = "float";
+				| TK_ID '=' TK_CAST_FLOAT TK_ID ';'
+				{
+					variavel var_recebedora = obtem_variavel($1.label);
+					variavel var_fonte = obtem_variavel($4.label);
+					if (var_recebedora.tipo != "float") {
+						yyerror("tipo incompatível para cast: " + var_recebedora.tipo);
+					}
+					else {
+						$$.tipo = "float";
+						$$.traducao = "\t" + var_recebedora.nome_sistema + " = (float) " + var_fonte.nome_sistema + ";\n";
+						var_recebedora.tipo = "float";
 					tipos_temporarios[var_recebedora.nome_sistema] = "float";
 				}
 			}
-			| TK_ID '=' TK_CAST_INT TK_ID ';'
-			{
-				variavel var_recebedora = variaveis[$1.label];
-				if (var_recebedora.tipo != "int") {
-					yyerror("tipo incompatível para cast: " + var_recebedora.tipo);
-				}
-				else {
-					variavel var_fonte = variaveis[$4.label];
-					$$.tipo = "int";
-					$$.traducao = "\t" + var_recebedora.nome_sistema + " = (int) " + var_fonte.nome_sistema + ";\n";
-					var_recebedora.tipo = "int";
+				| TK_ID '=' TK_CAST_INT TK_ID ';'
+				{
+					variavel var_recebedora = obtem_variavel($1.label);
+					variavel var_fonte = obtem_variavel($4.label);
+					if (var_recebedora.tipo != "int") {
+						yyerror("tipo incompatível para cast: " + var_recebedora.tipo);
+					}
+					else {
+						$$.tipo = "int";
+						$$.traducao = "\t" + var_recebedora.nome_sistema + " = (int) " + var_fonte.nome_sistema + ";\n";
+						var_recebedora.tipo = "int";
 					tipos_temporarios[var_recebedora.nome_sistema] = "int";
 				}
 			}
@@ -271,7 +271,7 @@ F 			: TK_NUM
 			| TK_ID
 			{
 				/* VERIFICAR SE JÁ ESTÁ DECLARADA */
-				variavel var = variaveis[$1.label];
+				variavel var = obtem_variavel($1.label);
 				$$.label = var.nome_sistema;
 				$$.tipo = var.tipo;
 				$$.traducao = "";
@@ -313,6 +313,18 @@ string gentempcode(string tipo)
 	tipos_temporarios[nome] = tipo;
 
 	return nome;
+}
+
+variavel obtem_variavel(string nome)
+{
+	auto it = variaveis.find(nome);
+
+	if (it == variaveis.end()) {
+		yyerror("variavel nao declarada: " + nome);
+		return variavel{};
+	}
+
+	return it->second;
 }
 
 atributos gera_operacao(atributos recebedor_resultado, atributos esq, atributos dir, string operador)
