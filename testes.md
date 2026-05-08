@@ -26,3 +26,17 @@ float F;
 int I;
 I = 10;
 F = I + 2.5;
+==========
+int I;
+float F;
+I = (int) F;
+
+============
+float a;
+a = 20.5;
+
+int b;
+b = (int) a;
+
+float c;
+c = b + a;

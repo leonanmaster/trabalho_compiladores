@@ -96,8 +96,13 @@ COMANDOS    : COMANDO COMANDOS	{$$.traducao = $1.traducao + $2.traducao;}
 
 COMANDO     : TK_ID '=' L ';'
 			{
-				variavel var = variaveis[$1.label];
-				$$.traducao = $3.traducao + "\t" + var.nome_sistema + " = " + $3.label + ";\n";
+				variavel var_recebedora = variaveis[$1.label];
+				if (var_recebedora.tipo != $3.tipo) {
+					yyerror("tipo do resultado da operação é incompatível com o tipo esperado: " + $3.tipo + " e " + var_recebedora.tipo);
+				} else {
+					variavel var = variaveis[$1.label];
+					$$.traducao = $3.traducao + "\t" + var.nome_sistema + " = " + $3.label + ";\n";
+				}
 			}
 			| TK_INT TK_ID ';'
 			{
@@ -106,7 +111,6 @@ COMANDO     : TK_ID '=' L ';'
 				var.nome_sistema = gentempcode("int");
 				var.tipo = "int";
 				variaveis[var.nome_usuario] = var;
-
 
 				$$.traducao = "";
 			}
@@ -144,6 +148,34 @@ COMANDO     : TK_ID '=' L ';'
 				$$.traducao = "";
 			}
 			|L  	{$$.traducao = $1.traducao;}
+			| TK_ID '=' TK_CAST_FLOAT TK_ID ';'
+			{
+				variavel var_recebedora = variaveis[$1.label];
+				if (var_recebedora.tipo != "float") {
+					yyerror("tipo incompatível para cast: " + var_recebedora.tipo);
+				}
+				else {
+					variavel var_fonte = variaveis[$4.label];
+					$$.tipo = "float";
+					$$.traducao = "\t" + var_recebedora.nome_sistema + " = (float) " + var_fonte.nome_sistema + ";\n";
+					var_recebedora.tipo = "float";
+					tipos_temporarios[var_recebedora.nome_sistema] = "float";
+				}
+			}
+			| TK_ID '=' TK_CAST_INT TK_ID ';'
+			{
+				variavel var_recebedora = variaveis[$1.label];
+				if (var_recebedora.tipo != "int") {
+					yyerror("tipo incompatível para cast: " + var_recebedora.tipo);
+				}
+				else {
+					variavel var_fonte = variaveis[$4.label];
+					$$.tipo = "int";
+					$$.traducao = "\t" + var_recebedora.nome_sistema + " = (int) " + var_fonte.nome_sistema + ";\n";
+					var_recebedora.tipo = "int";
+					tipos_temporarios[var_recebedora.nome_sistema] = "int";
+				}
+			}
 			;
 /* or -> and -> not */
 L			: L TK_OR K
@@ -237,13 +269,13 @@ F 			: TK_NUM
 				$$.traducao = "\t" + $$.label + " = " + $1.label + ";\n";
 			}
 			| TK_ID
-				{
-					/* VERIFICAR SE JÁ ESTÁ DECLARADA */
-					variavel var = variaveis[$1.label];
-					$$.label = var.nome_sistema;
-					$$.tipo = var.tipo;
-					$$.traducao = "";
-				}
+			{
+				/* VERIFICAR SE JÁ ESTÁ DECLARADA */
+				variavel var = variaveis[$1.label];
+				$$.label = var.nome_sistema;
+				$$.tipo = var.tipo;
+				$$.traducao = "";
+			}
 			| TK_CARACTER
 			{
 				$$.label = gentempcode("char");
@@ -309,9 +341,7 @@ atributos gera_operacao(atributos recebedor_resultado, atributos esq, atributos 
 		label_dir = gentempcode(tipo_resultado);
 		resultado.traducao += "\t" + label_dir + " = (" + tipo_resultado + ") " + dir.label + ";\n";
 	}
-	if (recebedor_resultado.tipo != resultado.tipo) {
-		yyerror("tipo do resultado da operação é incompatível com o tipo esperado: " + resultado.tipo + " e " + recebedor_resultado.tipo);
-	}
+	
 
 	resultado.traducao += "\t" + resultado.label + " = " + label_esq + " " + operador + " " + label_dir + ";\n";
 

@@ -1,4 +1,8 @@
-int F;
-int I;
-I = 1;
-F = I / 2.5;
+float a;
+a = 20.5;
+
+int b;
+b = (int) a;
+
+float c;
+c = b + a;
