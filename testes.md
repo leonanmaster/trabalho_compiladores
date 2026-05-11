@@ -26,6 +26,7 @@ float F;
 int I;
 I = 10;
 F = I + 2.5;
+
 ==========
 int I;
 float F;
@@ -40,3 +41,7 @@ b = (int) a;
 
 float c;
 c = b + a;
+
+=========
+int b;
+b = 1+2;
