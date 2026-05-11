@@ -1,7 +1,4 @@
-char a;
-a = 'a';
-char b;
-b = 'b';
-
-bool c;
-c = a == b;
+float a;
+a = 1.0;
+bool b;
+b = not a;

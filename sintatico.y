@@ -57,6 +57,8 @@ string gentempcode(string tipo);
 variavel obtem_variavel(string nome);
 atributos gera_operacao(atributos recebedor_resultado, atributos esq, atributos dir, string operador);
 atributos gera_operacao_comparacao(atributos recebedor_resultado, atributos esq, atributos dir, string operador);
+atributos gera_operacao_logica(atributos recebedor_resultado, atributos esq, atributos dir, string operador);
+atributos verifica_not(atributos operando);
 bool precisa_materializar(const atributos&);
 void materializa_operando(atributos&, string&);
 void converte_para_float(atributos&, string&);
@@ -181,30 +183,22 @@ COMANDO     : TK_ID '=' L ';'
 /* or -> and -> not */
 L			: L TK_OR K
 			{
-				$$.label = gentempcode("int");
-				tipos_temporarios[$$.label] = "int";
-				$$.tipo = "bool";
-				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label + " = " + $1.label + " || " + $3.label + ";\n";
+				$$ = gera_operacao_logica($$, $1, $3, "||");
+
 			}
 			|K   {$$.traducao = $1.traducao;}
 			;
 
 K			: K TK_AND M
 			{
-				$$.label = gentempcode("int");
-				tipos_temporarios[$$.label] = "int";
-				$$.tipo = "bool";
-				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label + " = " + $1.label + " && " + $3.label + ";\n";
+				$$ = gera_operacao_logica($$, $1, $3, "&&");
 			}
 			|M   {$$.traducao = $1.traducao;}
 			;
 
 M			: TK_NOT M
 			{
-				$$.label = gentempcode("int");
-				tipos_temporarios[$$.label] = "int";
-				$$.tipo = "bool";
-				$$.traducao = $2.traducao + "\t" + $$.label + " = !" + $2.label + ";\n";
+				$$ = verifica_not($2);
 			}
 			|R   {$$.traducao = $1.traducao;}
 			;
@@ -323,6 +317,35 @@ variavel obtem_variavel(string nome)
 	}
 
 	return it->second;
+}
+
+atributos verifica_not(atributos operando){
+	atributos resultado;
+
+	if (operando.tipo != "bool"){
+		yyerror("operador lógico 'not' só pode ser aplicado a operandos do tipo bool, mas foi fornecido: " + operando.tipo);
+		return resultado;
+	}
+	resultado.label = gentempcode("int");
+	resultado.tipo = "bool";
+	resultado.traducao = operando.traducao + "\t" + resultado.label + " = !" + operando.label + ";\n";
+	return resultado;
+}
+
+atributos gera_operacao_logica(atributos recebedor_resultado, atributos esq, atributos dir, string operador)
+{
+	atributos resultado;
+
+	if (esq.tipo != "bool" || dir.tipo != "bool") {
+		yyerror("operadores lógicos só podem ser aplicados a operandos do tipo bool, mas foram fornecidos: " + esq.tipo + " e " + dir.tipo);
+		return resultado;
+	}
+
+	resultado.label = gentempcode("int");
+	resultado.tipo = "bool";
+	resultado.traducao = esq.traducao + dir.traducao + "\t" + resultado.label + " = " + esq.label + " " + operador + " " + dir.label + ";\n";
+
+	return resultado;
 }
 
 atributos gera_operacao_comparacao(atributos recebedor_resultado, atributos esq, atributos dir, string operador)
