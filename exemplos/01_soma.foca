@@ -1,4 +1,2 @@
-float a;
-a = 1.0;
-bool b;
-b = not a;
+float f;
+f = 'a';
