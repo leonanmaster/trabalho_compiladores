@@ -45,3 +45,7 @@ c = b + a;
 =========
 int b;
 b = 1+2;
+
+==========
+ break e contunue o professor vai cobrar na entrega dois, qual break quebra oq
+

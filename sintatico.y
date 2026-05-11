@@ -56,6 +56,7 @@ void yyerror(string);
 string gentempcode(string tipo);
 variavel obtem_variavel(string nome);
 atributos gera_operacao(atributos recebedor_resultado, atributos esq, atributos dir, string operador);
+atributos gera_operacao_comparacao(atributos recebedor_resultado, atributos esq, atributos dir, string operador);
 bool precisa_materializar(const atributos&);
 void materializa_operando(atributos&, string&);
 void converte_para_float(atributos&, string&);
@@ -96,14 +97,14 @@ COMANDOS    : COMANDO COMANDOS	{$$.traducao = $1.traducao + $2.traducao;}
 			;
 
 COMANDO     : TK_ID '=' L ';'
-				{
-					variavel var_recebedora = obtem_variavel($1.label);
-					if (var_recebedora.tipo != $3.tipo) {
-						yyerror("tipo do resultado da operação é incompatível com o tipo esperado: " + $3.tipo + " e " + var_recebedora.tipo);
-					} else {
-						$$.traducao = $3.traducao + "\t" + var_recebedora.nome_sistema + " = " + $3.label + ";\n";
-					}
+			{
+				variavel var_recebedora = obtem_variavel($1.label);
+				if (var_recebedora.tipo != $3.tipo) {
+					yyerror("tipo do resultado da operação é incompatível com o tipo esperado: " + $3.tipo + " e " + var_recebedora.tipo);
+				} else {
+					$$.traducao = $3.traducao + "\t" + var_recebedora.nome_sistema + " = " + $3.label + ";\n";
 				}
+			}
 			| TK_INT TK_ID ';'
 			{
 				variavel var;
@@ -148,33 +149,33 @@ COMANDO     : TK_ID '=' L ';'
 				$$.traducao = "";
 			}
 			|L  	{$$.traducao = $1.traducao;}
-				| TK_ID '=' TK_CAST_FLOAT TK_ID ';'
-				{
-					variavel var_recebedora = obtem_variavel($1.label);
-					variavel var_fonte = obtem_variavel($4.label);
-					if (var_recebedora.tipo != "float") {
-						yyerror("tipo incompatível para cast: " + var_recebedora.tipo);
-					}
-					else {
-						$$.tipo = "float";
-						$$.traducao = "\t" + var_recebedora.nome_sistema + " = (float) " + var_fonte.nome_sistema + ";\n";
-						var_recebedora.tipo = "float";
-					tipos_temporarios[var_recebedora.nome_sistema] = "float";
+			| TK_ID '=' TK_CAST_FLOAT TK_ID ';'
+			{
+				variavel var_recebedora = obtem_variavel($1.label);
+				variavel var_fonte = obtem_variavel($4.label);
+				if (var_recebedora.tipo != "float") {
+					yyerror("tipo incompatível para cast: " + var_recebedora.tipo);
 				}
+				else {
+					$$.tipo = "float";
+					$$.traducao = "\t" + var_recebedora.nome_sistema + " = (float) " + var_fonte.nome_sistema + ";\n";
+					var_recebedora.tipo = "float";
+				tipos_temporarios[var_recebedora.nome_sistema] = "float";
 			}
-				| TK_ID '=' TK_CAST_INT TK_ID ';'
-				{
-					variavel var_recebedora = obtem_variavel($1.label);
-					variavel var_fonte = obtem_variavel($4.label);
-					if (var_recebedora.tipo != "int") {
-						yyerror("tipo incompatível para cast: " + var_recebedora.tipo);
-					}
-					else {
-						$$.tipo = "int";
-						$$.traducao = "\t" + var_recebedora.nome_sistema + " = (int) " + var_fonte.nome_sistema + ";\n";
-						var_recebedora.tipo = "int";
-					tipos_temporarios[var_recebedora.nome_sistema] = "int";
+			}
+			| TK_ID '=' TK_CAST_INT TK_ID ';'
+			{
+				variavel var_recebedora = obtem_variavel($1.label);
+				variavel var_fonte = obtem_variavel($4.label);
+				if (var_recebedora.tipo != "int") {
+					yyerror("tipo incompatível para cast: " + var_recebedora.tipo);
 				}
+				else {
+					$$.tipo = "int";
+					$$.traducao = "\t" + var_recebedora.nome_sistema + " = (int) " + var_fonte.nome_sistema + ";\n";
+					var_recebedora.tipo = "int";
+				tipos_temporarios[var_recebedora.nome_sistema] = "int";
+			}
 			}
 			;
 /* or -> and -> not */
@@ -210,13 +211,10 @@ M			: TK_NOT M
 
 R			: R TK_OPERADOR_RELACIONAL E
 			{
-				$$.label = gentempcode("int");
-				tipos_temporarios[$$.label] = "int";
-				$$.tipo = "bool";
-				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label + " = " + $1.label + " " + $2.label + " " + $3.label + ";\n";
+				$$ = gera_operacao_comparacao($$, $1, $3, $2.label);
 			}
 					/* VAI TER QUE SETAR O TIPO DE E, PARA FAZER AS VALIDAÇÕES DE OPERAÇÕES */
-			|E  	{$$.traducao = $1.traducao;}
+			|E  	{$$.traducao = $1.traducao; $$.tipo = $1.tipo;}
 
 			;
 			/* FAZER A MESMA COISA QUE NO RELACIONAL, CRIAR TK_OPERACOES_SOMA_SUB SLA */
@@ -325,6 +323,55 @@ variavel obtem_variavel(string nome)
 	}
 
 	return it->second;
+}
+
+atributos gera_operacao_comparacao(atributos recebedor_resultado, atributos esq, atributos dir, string operador)
+{
+	atributos resultado;
+	string tipo_operandos = tabela_de_conversao[{esq.tipo, dir.tipo}];
+
+	if (esq.tipo == "char" && dir.tipo == "char"){
+		if (operador == "==" || operador == "!="){
+			
+			resultado.label = gentempcode("int");
+			resultado.tipo = "bool";
+			resultado.traducao = esq.traducao + dir.traducao;
+
+			string label_esq = esq.label;
+			string label_dir = dir.label;
+
+			resultado.traducao += "\t" + resultado.label + " = " + label_esq + " " + operador + " " + label_dir + ";\n";
+
+			return resultado;
+		}
+	}	
+
+	if (tipo_operandos == "") {
+		yyerror("tipos incompatíveis: " + esq.tipo + " e " + dir.tipo);
+		return resultado;
+	}
+
+	resultado.label = gentempcode(tipo_operandos);
+	resultado.tipo = "bool";
+	resultado.traducao = esq.traducao + dir.traducao;
+
+	string label_esq = esq.label;
+	string label_dir = dir.label;
+
+	if (esq.tipo != tipo_operandos) {
+		label_esq = gentempcode(tipo_operandos);
+		resultado.traducao += "\t" + label_esq + " = (" + tipo_operandos + ") " + esq.label + ";\n";
+	}
+
+	if (dir.tipo != tipo_operandos) {
+		label_dir = gentempcode(tipo_operandos);
+		resultado.traducao += "\t" + label_dir + " = (" + tipo_operandos + ") " + dir.label + ";\n";
+	}
+	
+
+	resultado.traducao += "\t" + resultado.label + " = " + label_esq + " " + operador + " " + label_dir + ";\n";
+
+	return resultado;
 }
 
 atributos gera_operacao(atributos recebedor_resultado, atributos esq, atributos dir, string operador)

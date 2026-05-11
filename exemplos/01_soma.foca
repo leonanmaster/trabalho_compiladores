@@ -1,0 +1,7 @@
+char a;
+a = 'a';
+char b;
+b = 'b';
+
+bool c;
+c = a == b;
