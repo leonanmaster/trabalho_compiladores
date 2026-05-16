@@ -32,7 +32,7 @@ OPERADOR_RELACIONAL {IGUAL_IGUAL}|{MAIOR_QUE}|{MENOR_QUE}|{MAIOR_IGUAL}|{MENOR_I
 
 [+*-/=;]		{ return *yytext; }
 
-[()]		{ return *yytext; }
+[(){}]		{ return *yytext; }
 
 
 

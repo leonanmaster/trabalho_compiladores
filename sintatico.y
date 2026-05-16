@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 #include <map>
+#include <vector>
 #include <utility>
 
 #define YYSTYPE atributos
@@ -27,7 +28,18 @@ struct variavel
 	string tipo;
 };
 
-map<string, variavel> variaveis;
+// map<string, variavel> variaveis;
+vector<map<string, variavel>> pilha_de_tabelas;
+
+void empilha_escopo() {
+	pilha_de_tabelas.push_back(map<string, variavel>());
+}
+void desempilha_escopo() {
+	if (!pilha_de_tabelas.empty()) {
+		pilha_de_tabelas.pop_back();
+	}
+}
+
 map<string,string> tipos_temporarios; /* Esta tabela mapeia o nome da var temporaria (t1, t2 etc) pro tipo dela. */
 
 map<pair<string,string>, string> tabela_de_conversao = {
@@ -109,53 +121,57 @@ COMANDO     : TK_ID '=' L ';'
 			}
 			| TK_INT TK_ID ';'
 			{
-				if (variaveis.find($2.label) != variaveis.end()) {
-					yyerror("variavel ja declarada: " + $2.label);
+				auto& escopo_atual = pilha_de_tabelas.back(); // apenas referência para evitar copias desnecessárias
+				if (escopo_atual.find($2.label) != escopo_atual.end()) {
+					yyerror("variavel ja declarada neste escopo: " + $2.label);
 				} else {
 					variavel var;
 					var.nome_usuario = $2.label;
 					var.nome_sistema = gentempcode("int");
 					var.tipo = "int";
-					variaveis[var.nome_usuario] = var;
+					escopo_atual[var.nome_usuario] = var;
 				}
 				$$.traducao = "";
 			}
 			| TK_FLOAT TK_ID ';'
 			{
-				if (variaveis.find($2.label) != variaveis.end()) {
-					yyerror("variavel ja declarada: " + $2.label);
+				auto& escopo_atual = pilha_de_tabelas.back();
+				if (escopo_atual.find($2.label) != escopo_atual.end()) {
+					yyerror("variavel ja declarada neste escopo: " + $2.label);
 				} else {
 					variavel var;
 					var.nome_usuario = $2.label;
 					var.nome_sistema = gentempcode("float");
 					var.tipo = "float";
-					variaveis[var.nome_usuario] = var;
+					escopo_atual[var.nome_usuario] = var;
 				}
 				$$.traducao = "";
 			}
 			| TK_CHAR TK_ID ';'
 			{
-				if (variaveis.find($2.label) != variaveis.end()) {
-					yyerror("variavel ja declarada: " + $2.label);
+				auto& escopo_atual = pilha_de_tabelas.back();
+				if (escopo_atual.find($2.label) != escopo_atual.end()) {
+					yyerror("variavel ja declarada neste escopo: " + $2.label);
 				} else {
 					variavel var;
 					var.nome_usuario = $2.label;
 					var.nome_sistema = gentempcode("char");
 					var.tipo = "char";
-					variaveis[var.nome_usuario] = var;
+					escopo_atual[var.nome_usuario] = var;
 				}
 				$$.traducao = "";
 			}
 			| TK_BOOL TK_ID ';'
 			{
-				if (variaveis.find($2.label) != variaveis.end()) {
-					yyerror("variavel ja declarada: " + $2.label);
+				auto& escopo_atual = pilha_de_tabelas.back();
+				if (escopo_atual.find($2.label) != escopo_atual.end()) {
+					yyerror("variavel ja declarada neste escopo: " + $2.label);
 				} else {
 					variavel var;
 					var.nome_usuario = $2.label;
 					var.nome_sistema = gentempcode("int");
 					var.tipo = "bool";
-					variaveis[var.nome_usuario] = var;
+					escopo_atual[var.nome_usuario] = var;
 				}
 				$$.traducao = "";
 			}
@@ -187,6 +203,22 @@ COMANDO     : TK_ID '=' L ';'
 					var_recebedora.tipo = "int";
 				tipos_temporarios[var_recebedora.nome_sistema] = "int";
 			}
+			}
+			| BLOCO
+			{
+				$$.traducao = $1.traducao;
+			}
+			;
+BLOCO		: '{'
+			{
+				empilha_escopo();
+			}
+			COMANDOS '}' 
+			{
+				desempilha_escopo();
+				$$.traducao = $3.traducao; 
+				// aqui é 3 porque o bloco é composto por 3 partes: '{', COMANDOS e '}'. O comando que interessa para
+				// a tradução é o COMANDOS, que é o $2, mas como tem um empilha_escopo() antes, o $2 passa a ser o $3.
 			}
 			;
 /* or -> and -> not */
@@ -318,14 +350,16 @@ string gentempcode(string tipo)
 
 variavel obtem_variavel(string nome)
 {
-	auto it = variaveis.find(nome);
+	for (int i = pilha_de_tabelas.size() - 1; i >= 0; i--) {
+		auto it = pilha_de_tabelas[i].find(nome);
 
-	if (it == variaveis.end()) {
-		yyerror("variavel nao declarada: " + nome);
-		return variavel{};
+		if (it != pilha_de_tabelas[i].end()) {
+			return it->second;
+		}
 	}
+	yyerror("variavel nao declarada: " + nome);
+	return variavel{};
 
-	return it->second;
 }
 
 atributos verifica_not(atributos operando){
@@ -443,6 +477,7 @@ atributos gera_operacao(atributos recebedor_resultado, atributos esq, atributos 
 int main(int argc, char* argv[])
 {
 	var_temp_qnt = 0;
+	empilha_escopo(); //global
 
 	if (yyparse() == 0)
 		cout << codigo_gerado;

@@ -1,6 +1,7 @@
-bool x;
-int t;
-t = 2;
-int k;
-k = 3;
-x = t < k;
+int a;
+a = 1;
+{
+    int b;
+    b = 2;
+    a = b + 1;
+}
