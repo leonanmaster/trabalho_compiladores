@@ -109,45 +109,54 @@ COMANDO     : TK_ID '=' L ';'
 			}
 			| TK_INT TK_ID ';'
 			{
-				variavel var;
-				var.nome_usuario = $2.label;
-				var.nome_sistema = gentempcode("int");
-				var.tipo = "int";
-				variaveis[var.nome_usuario] = var;
-
+				if (variaveis.find($2.label) != variaveis.end()) {
+					yyerror("variavel ja declarada: " + $2.label);
+				} else {
+					variavel var;
+					var.nome_usuario = $2.label;
+					var.nome_sistema = gentempcode("int");
+					var.tipo = "int";
+					variaveis[var.nome_usuario] = var;
+				}
 				$$.traducao = "";
 			}
 			| TK_FLOAT TK_ID ';'
 			{
-				variavel var;
-				var.nome_usuario = $2.label;
-				var.nome_sistema = gentempcode("float");
-				var.tipo = "float";
-
-				variaveis[var.nome_usuario] = var;
-
+				if (variaveis.find($2.label) != variaveis.end()) {
+					yyerror("variavel ja declarada: " + $2.label);
+				} else {
+					variavel var;
+					var.nome_usuario = $2.label;
+					var.nome_sistema = gentempcode("float");
+					var.tipo = "float";
+					variaveis[var.nome_usuario] = var;
+				}
 				$$.traducao = "";
 			}
-
 			| TK_CHAR TK_ID ';'
 			{
-				variavel var;
-				var.nome_usuario = $2.label;
-				var.nome_sistema = gentempcode("char");
-				var.tipo = "char";
-
-				variaveis[var.nome_usuario] = var;
+				if (variaveis.find($2.label) != variaveis.end()) {
+					yyerror("variavel ja declarada: " + $2.label);
+				} else {
+					variavel var;
+					var.nome_usuario = $2.label;
+					var.nome_sistema = gentempcode("char");
+					var.tipo = "char";
+					variaveis[var.nome_usuario] = var;
+				}
 				$$.traducao = "";
 			}
 			| TK_BOOL TK_ID ';'
 			{
-				/* TENTAR COLOCAR ISSO NUMA FUNÇÃO */
-				variavel var;
-				var.nome_usuario = $2.label;
-				var.nome_sistema = gentempcode("int");
-				var.tipo = "bool";
-
-				variaveis[var.nome_usuario] = var;
+				if (variaveis.find($2.label) != variaveis.end()) {
+					yyerror("variavel ja declarada: " + $2.label);
+				} else {
+					variavel var;
+					var.nome_usuario = $2.label;
+					var.nome_sistema = gentempcode("int");
+					var.tipo = "bool";
+					variaveis[var.nome_usuario] = var;
+				}
 				$$.traducao = "";
 			}
 			|L  	{$$.traducao = $1.traducao;}

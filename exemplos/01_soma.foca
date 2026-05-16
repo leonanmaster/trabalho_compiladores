@@ -1,2 +1,6 @@
-float f;
-f = 'a';
+bool x;
+int t;
+t = 2;
+int k;
+k = 3;
+x = t < k;
