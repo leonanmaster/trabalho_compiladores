@@ -11,6 +11,7 @@
 using namespace std;
 
 int var_temp_qnt;
+int label_qnt;
 int linha = 1;
 string codigo_gerado;
 string cast;
@@ -66,6 +67,7 @@ map<pair<string,string>, string> tabela_de_conversao = {
 int yylex(void);
 void yyerror(string);
 string gentempcode(string tipo);
+string genlabelcode();
 variavel obtem_variavel(string nome);
 atributos gera_operacao(atributos recebedor_resultado, atributos esq, atributos dir, string operador);
 atributos gera_operacao_comparacao(atributos recebedor_resultado, atributos esq, atributos dir, string operador);
@@ -76,7 +78,7 @@ void materializa_operando(atributos&, string&);
 void converte_para_float(atributos&, string&);
 %}
 
-%token TK_NUM TK_ID TK_INT TK_NUM_FLOAT TK_CHAR TK_CARACTER TK_BOOL TK_BOOL_LIT TK_OPERADOR_RELACIONAL TK_NOT TK_AND TK_OR TK_FLOAT TK_CAST_INT TK_CAST_FLOAT
+%token TK_NUM TK_ID TK_INT TK_NUM_FLOAT TK_CHAR TK_CARACTER TK_BOOL TK_BOOL_LIT TK_OPERADOR_RELACIONAL TK_NOT TK_AND TK_OR TK_FLOAT TK_CAST_INT TK_CAST_FLOAT TK_IF TK_ELSE	
 
 %start S
 
@@ -203,6 +205,36 @@ COMANDO     : TK_ID '=' L ';'
 					var_recebedora.tipo = "int";
 				tipos_temporarios[var_recebedora.nome_sistema] = "int";
 			}
+			}
+			| TK_IF '(' L ')' COMANDO // para permitir if sem chaves, aplicando apenas ao comando seguinte
+			{
+				if ($3.tipo != "bool") {
+					yyerror("condicao do if deve ser bool, foi fornecido: " + $3.tipo);
+				}
+
+				string label_fim = genlabelcode();
+				$$.traducao = $3.traducao +
+								"\tif (!" + $3.label + ") goto " + label_fim + ";\n" +
+								$5.traducao +
+								label_fim + ":\n";
+
+			}
+			| TK_IF '(' L ')' COMANDO TK_ELSE COMANDO
+			{
+				if ($3.tipo != "bool") {
+					yyerror("condicao do if deve ser bool, foi fornecido: " + $3.tipo);
+				}
+
+				string label_else = genlabelcode();
+				string label_fim = genlabelcode();
+
+				$$.traducao = $3.traducao +
+								"\tif (!" + $3.label + ") goto " + label_else + ";\n" +
+								$5.traducao +
+								"\tgoto " + label_fim + ";\n" +
+								label_else + ":\n" +
+								$7.traducao +
+								label_fim + ":\n";
 			}
 			| BLOCO
 			{
@@ -344,6 +376,14 @@ string gentempcode(string tipo)
 	var_temp_qnt++;
 	string nome = "t" + to_string(var_temp_qnt);
 	tipos_temporarios[nome] = tipo;
+
+	return nome;
+}
+
+string genlabelcode()
+{
+	label_qnt++;
+	string nome = "L" + to_string(label_qnt);
 
 	return nome;
 }

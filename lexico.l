@@ -63,6 +63,9 @@ OPERADOR_RELACIONAL {IGUAL_IGUAL}|{MAIOR_QUE}|{MENOR_QUE}|{MAIOR_IGUAL}|{MENOR_I
 "and"       { yylval.label = yytext; return TK_AND; }
 "or"        { yylval.label = yytext; return TK_OR; }
 
+"if"        { return TK_IF; }
+"else"      { return TK_ELSE; }
+
 {ID}		{ yylval.label = yytext; return TK_ID; }
 
 .			{ fprintf(stderr, "Caractere nao reconhecido na linha %d: %s\n", linha, yytext); }

@@ -158,3 +158,72 @@ c = 65;
 float f;
 f = 'a';
 #
+# Teste: if simples com bloco
+int a;
+a = 0;
+if (1 < 2) {
+    a = 1;
+}
+#
+# Teste: if simples sem chaves (comando unico)
+int a;
+a = 0;
+if (true)
+    a = 1;
+#
+# Teste: if/else com blocos
+int a;
+if (5 >= 3) {
+    int b;
+    b = 10;
+    a = b;
+} else {
+    a = 0;
+}
+#
+# Teste: if/else sem chaves (comandos unicos)
+int a;
+bool cond;
+cond = false;
+if (cond)
+    a = 1;
+else
+    a = 2;
+#
+# Teste: if dentro de if (Aninhado)
+int a;
+a = 0;
+if (true) {
+    if (2 > 1) {
+        a = 10;
+    }
+}
+#
+# Teste Falha: Condicao inteira no if (Erro semantico)
+int a;
+a = 1;
+if (a) {
+    a = 2;
+}
+#
+# Teste Falha: Condicao float no if (Erro semantico)
+float f;
+f = 2.5;
+if (f) {
+    int x;
+    x = 1;
+}
+#
+# Teste Falha: Esquecer parenteses na condicao (Erro sintatico)
+int a;
+if true {
+    a = 1;
+}
+#
+# Teste Falha: else sem if correspondente (Erro sintatico)
+int a;
+a = 1;
+else {
+    a = 2;
+}
+#
