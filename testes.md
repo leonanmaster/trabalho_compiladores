@@ -227,3 +227,23 @@ else {
     a = 2;
 }
 #
+# Teste: while simples com bloco
+int a;
+a = 0;
+while (a < 5) {
+    a = a + 1;
+}
+#
+# Teste: while com comando unico (sem chaves)
+int a;
+a = 5;
+while (a > 0)
+    a = a - 1;
+#
+# Teste Falha: while com condicao inteira (Erro semantico)
+int a;
+a = 10;
+while (a) {
+    a = a - 1;
+}
+#
