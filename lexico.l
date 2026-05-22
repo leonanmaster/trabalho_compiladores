@@ -67,6 +67,9 @@ OPERADOR_RELACIONAL {IGUAL_IGUAL}|{MAIOR_QUE}|{MENOR_QUE}|{MAIOR_IGUAL}|{MENOR_I
 "else"      { return TK_ELSE; }
 
 "while"     { return TK_WHILE; }
+"do"        { return TK_DO; }
+"for"       { return TK_FOR; }
+
 
 {ID}		{ yylval.label = yytext; return TK_ID; }
 

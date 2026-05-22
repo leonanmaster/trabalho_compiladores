@@ -247,3 +247,31 @@ while (a) {
     a = a - 1;
 }
 #
+# Teste: do/while com bloco
+int a;
+a = 0;
+do {
+    a = a + 1;
+} while (a < 5);
+#
+# Teste: do/while comando unico
+int a;
+a = 5;
+do
+    a = a - 1;
+while (a > 0);
+#
+# Teste Falha: do/while com condicao inteira (Erro semantico)
+int a;
+a = 10;
+do {
+    a = a - 1;
+} while (a);
+#
+# Teste Falha: do/while sem ponto e virgula no final (Erro sintatico)
+int a;
+a = 0;
+do {
+    a = 1;
+} while (a < 5)
+#

@@ -78,7 +78,7 @@ void materializa_operando(atributos&, string&);
 void converte_para_float(atributos&, string&);
 %}
 
-%token TK_NUM TK_ID TK_INT TK_NUM_FLOAT TK_CHAR TK_CARACTER TK_BOOL TK_BOOL_LIT TK_OPERADOR_RELACIONAL TK_NOT TK_AND TK_OR TK_FLOAT TK_CAST_INT TK_CAST_FLOAT TK_IF TK_ELSE	TK_WHILE
+%token TK_NUM TK_ID TK_INT TK_NUM_FLOAT TK_CHAR TK_CARACTER TK_BOOL TK_BOOL_LIT TK_OPERADOR_RELACIONAL TK_NOT TK_AND TK_OR TK_FLOAT TK_CAST_INT TK_CAST_FLOAT TK_IF TK_ELSE	TK_WHILE TK_DO TK_FOR
 
 %start S
 
@@ -249,6 +249,22 @@ COMANDO     : TK_ID '=' L ';'
 								$3.traducao +
 								"\tif (!" + $3.label + ") goto " + label_fim + ";\n" +
 								$5.traducao +
+								"\tgoto " + label_inicio + ";\n" +
+								label_fim + ":\n";
+			}
+			| TK_DO COMANDO TK_WHILE '(' L ')' ';'
+			{
+				if ($5.tipo != "bool") {
+					yyerror("condicao do while deve ser bool, foi fornecido: " + $5.tipo);
+				}
+
+				string label_inicio = genlabelcode();
+				string label_fim = genlabelcode();
+
+				$$.traducao = label_inicio + ":\n" +
+								$2.traducao +
+								$5.traducao +
+								"\tif (!" + $5.label + ") goto " + label_fim + ";\n" +
 								"\tgoto " + label_inicio + ";\n" +
 								label_fim + ":\n";
 			}
