@@ -287,22 +287,12 @@ COMANDO     : TK_ID '=' L ';'
 
 				$$.traducao = 	$5.traducao + 
 								"\t" + var_contador.nome_sistema + " = " + $5.label + ";\n" + 
-								
-								// 2. Início do laço
 								label_inicio + ":\n" + 
-								
-								// 3. Avalia condição ($7) e testa saída
 								$7.traducao + 
 								"\tif (!" + $7.label + ") goto " + label_fim + ";\n" + 
-								
-								// 4. CORPO DO LAÇO ($13) - Faltava isso!
 								$13.traducao + 
-								
-								// 5. Incremento/Atualização ($11 é o valor, var_atualizacao é o ID)
 								$11.traducao + 
 								"\t" + var_atualizacao.nome_sistema + " = " + $11.label + ";\n" + 
-								
-								// 6. Volta pro início e marcação de fim
 								"\tgoto " + label_inicio + ";\n" + 
 								label_fim + ":\n";
 			} 
