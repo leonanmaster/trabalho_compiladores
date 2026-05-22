@@ -274,4 +274,22 @@ a = 0;
 do {
     a = 1;
 } while (a < 5)
+## Teste: for simples com bloco
+int i;
+int soma;
+soma = 0;
+for (i = 0; i < 5; i = i + 1) {
+    soma = soma + i;
+}
+#
+# Teste: for simples comando unico
+int i;
+for (i = 10; i > 0; i = i - 1)
+    i = i * 1;
+#
+# Teste Falha: condicao nao booleana no for (Erro semantico)
+int i;
+for (i = 0; i + 5; i = i + 1) {
+    i = i + 0;
+}
 #

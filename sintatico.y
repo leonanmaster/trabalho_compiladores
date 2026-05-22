@@ -268,6 +268,44 @@ COMANDO     : TK_ID '=' L ';'
 								"\tgoto " + label_inicio + ";\n" +
 								label_fim + ":\n";
 			}
+			| TK_FOR '(' TK_ID '=' L ';' L ';' TK_ID '=' L ')' COMANDO // pressupoe q for tem a forma for (i = 0; i < 10; i = i + 1), com o contador previamente declarado e sem operadores como i++...
+			{
+				variavel var_contador = obtem_variavel($3.label);
+				if (var_contador.tipo != "int") {
+					yyerror("contador de for deve ser int, foi fornecido: " + var_contador.tipo);
+				}
+				if ($7.tipo != "bool") {
+					yyerror("condicao de for deve ser bool, foi fornecido: " + $7.tipo);
+				}
+				variavel var_atualizacao = obtem_variavel($9.label);
+				if (var_atualizacao.tipo != "int") {
+					yyerror("atualizacao de for deve ser int, foi fornecido: " + var_atualizacao.tipo);
+				}
+
+				string label_inicio = genlabelcode();
+				string label_fim = genlabelcode();
+
+				$$.traducao = 	$5.traducao + 
+								"\t" + var_contador.nome_sistema + " = " + $5.label + ";\n" + 
+								
+								// 2. Início do laço
+								label_inicio + ":\n" + 
+								
+								// 3. Avalia condição ($7) e testa saída
+								$7.traducao + 
+								"\tif (!" + $7.label + ") goto " + label_fim + ";\n" + 
+								
+								// 4. CORPO DO LAÇO ($13) - Faltava isso!
+								$13.traducao + 
+								
+								// 5. Incremento/Atualização ($11 é o valor, var_atualizacao é o ID)
+								$11.traducao + 
+								"\t" + var_atualizacao.nome_sistema + " = " + $11.label + ";\n" + 
+								
+								// 6. Volta pro início e marcação de fim
+								"\tgoto " + label_inicio + ";\n" + 
+								label_fim + ":\n";
+			} 
 			| BLOCO
 			{
 				$$.traducao = $1.traducao;
