@@ -293,3 +293,49 @@ for (i = 0; i + 5; i = i + 1) {
     i = i + 0;
 }
 #
+# Teste: break dentro de while
+int a;
+a = 0;
+while (a < 10) {
+    a = a + 1;
+    if (a == 5) {
+        break;
+    }
+}
+#
+# Teste: continue dentro de for
+int i;
+int soma;
+soma = 0;
+for (i = 0; i < 5; i = i + 1) {
+    if (i == 2) {
+        continue;
+    }
+    soma = soma + i;
+}
+#
+# Teste: break em lacos aninhados (for e while)
+int i;
+int j;
+for (i = 0; i < 3; i = i + 1) {
+    j = 0;
+    while (j < 3) {
+        j = j + 1;
+        if (j == 2) {
+            break;
+        }
+    }
+}
+#
+# Teste Falha: break fora de laco
+int a;
+a = 1;
+break;
+#
+# Teste Falha: continue dentro de if, mas fora de laco
+int a;
+a = 0;
+if (a == 0) {
+    continue;
+}
+#

@@ -15,6 +15,7 @@ int label_qnt;
 int linha = 1;
 string codigo_gerado;
 string cast;
+
 struct atributos
 {
 	string label;
@@ -31,6 +32,9 @@ struct variavel
 
 // map<string, variavel> variaveis;
 vector<map<string, variavel>> pilha_de_tabelas;
+
+vector<string> pilha_labels_fim; // para break
+vector<string> pilha_labels_inicio; // para continue
 
 void empilha_escopo() {
 	pilha_de_tabelas.push_back(map<string, variavel>());
@@ -78,7 +82,7 @@ void materializa_operando(atributos&, string&);
 void converte_para_float(atributos&, string&);
 %}
 
-%token TK_NUM TK_ID TK_INT TK_NUM_FLOAT TK_CHAR TK_CARACTER TK_BOOL TK_BOOL_LIT TK_OPERADOR_RELACIONAL TK_NOT TK_AND TK_OR TK_FLOAT TK_CAST_INT TK_CAST_FLOAT TK_IF TK_ELSE	TK_WHILE TK_DO TK_FOR
+%token TK_NUM TK_ID TK_INT TK_NUM_FLOAT TK_CHAR TK_CARACTER TK_BOOL TK_BOOL_LIT TK_OPERADOR_RELACIONAL TK_NOT TK_AND TK_OR TK_FLOAT TK_CAST_INT TK_CAST_FLOAT TK_IF TK_ELSE	TK_WHILE TK_DO TK_FOR TK_CONTINUE TK_BREAK
 
 %start S
 
@@ -236,39 +240,72 @@ COMANDO     : TK_ID '=' L ';'
 								$7.traducao +
 								label_fim + ":\n";
 			}
-			| TK_WHILE '(' L ')' COMANDO
+			| TK_WHILE '(' L ')'
+			{
+				string label_inicio = genlabelcode();
+				string label_fim = genlabelcode();
+				pilha_labels_inicio.push_back(label_inicio);
+				pilha_labels_fim.push_back(label_fim);
+			}
+			
+			COMANDO
+			
 			{
 				if ($3.tipo != "bool") {
 					yyerror("condicao do while deve ser bool, foi fornecido: " + $3.tipo);
 				}
 
-				string label_inicio = genlabelcode();
-				string label_fim = genlabelcode();
+				string label_inicio = pilha_labels_inicio.back();
+            	string label_fim = pilha_labels_fim.back();
 
 				$$.traducao = label_inicio + ":\n" +
 								$3.traducao +
 								"\tif (!" + $3.label + ") goto " + label_fim + ";\n" +
-								$5.traducao +
+								$6.traducao +
 								"\tgoto " + label_inicio + ";\n" +
 								label_fim + ":\n";
+				
+				pilha_labels_inicio.pop_back();
+				pilha_labels_fim.pop_back();
 			}
-			| TK_DO COMANDO TK_WHILE '(' L ')' ';'
+			| TK_DO 
 			{
-				if ($5.tipo != "bool") {
-					yyerror("condicao do while deve ser bool, foi fornecido: " + $5.tipo);
-				}
-
 				string label_inicio = genlabelcode();
 				string label_fim = genlabelcode();
+				pilha_labels_inicio.push_back(label_inicio);
+				pilha_labels_fim.push_back(label_fim);
+			}
+
+			COMANDO TK_WHILE '(' L ')' ';'
+
+			{
+				if ($6.tipo != "bool") {
+					yyerror("condicao do while deve ser bool, foi fornecido: " + $6.tipo);
+				}
+
+				string label_inicio = pilha_labels_inicio.back();
+				string label_fim = pilha_labels_fim.back();
 
 				$$.traducao = label_inicio + ":\n" +
-								$2.traducao +
-								$5.traducao +
-								"\tif (!" + $5.label + ") goto " + label_fim + ";\n" +
+								$3.traducao +
+								$6.traducao +
+								"\tif (!" + $6.label + ") goto " + label_fim + ";\n" +
 								"\tgoto " + label_inicio + ";\n" +
 								label_fim + ":\n";
+
+				pilha_labels_inicio.pop_back();
+                pilha_labels_fim.pop_back();
 			}
-			| TK_FOR '(' TK_ID '=' L ';' L ';' TK_ID '=' L ')' COMANDO // pressupoe q for tem a forma for (i = 0; i < 10; i = i + 1), com o contador previamente declarado e sem operadores como i++...
+			| TK_FOR '(' TK_ID '=' L ';' L ';' TK_ID '=' L ')' 
+			{
+				string label_inicio = genlabelcode();
+				string label_fim = genlabelcode();
+				pilha_labels_inicio.push_back(label_inicio);
+				pilha_labels_fim.push_back(label_fim);
+			}
+			
+			COMANDO // pressupoe q for tem a forma for (i = 0; i < 10; i = i + 1), com o contador previamente declarado e sem operadores como i++...
+
 			{
 				variavel var_contador = obtem_variavel($3.label);
 				if (var_contador.tipo != "int") {
@@ -282,20 +319,39 @@ COMANDO     : TK_ID '=' L ';'
 					yyerror("atualizacao de for deve ser int, foi fornecido: " + var_atualizacao.tipo);
 				}
 
-				string label_inicio = genlabelcode();
-				string label_fim = genlabelcode();
+				string label_inicio = pilha_labels_inicio.back();
+				string label_fim = pilha_labels_fim.back();
 
 				$$.traducao = 	$5.traducao + 
 								"\t" + var_contador.nome_sistema + " = " + $5.label + ";\n" + 
 								label_inicio + ":\n" + 
 								$7.traducao + 
 								"\tif (!" + $7.label + ") goto " + label_fim + ";\n" + 
-								$13.traducao + 
+								$14.traducao + 
 								$11.traducao + 
 								"\t" + var_atualizacao.nome_sistema + " = " + $11.label + ";\n" + 
 								"\tgoto " + label_inicio + ";\n" + 
 								label_fim + ":\n";
+				
+				pilha_labels_inicio.pop_back();
+                pilha_labels_fim.pop_back();
 			} 
+			| TK_BREAK ';'
+			{
+				if (pilha_labels_fim.empty()) {
+					yyerror("comando 'break' usado fora de loop");
+				} else {
+					$$.traducao = "\tgoto " + pilha_labels_fim.back() + ";\n";
+				}
+			}
+			| TK_CONTINUE ';'
+			{
+				if (pilha_labels_inicio.empty()) {
+					yyerror("comando 'continue' usado fora de loop");
+				} else {
+					$$.traducao = "\tgoto " + pilha_labels_inicio.back() + ";\n";
+				}
+			}
 			| BLOCO
 			{
 				$$.traducao = $1.traducao;
