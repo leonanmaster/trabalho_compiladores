@@ -36,6 +36,8 @@ vector<map<string, variavel>> pilha_de_tabelas;
 vector<string> pilha_labels_fim; // para break
 vector<string> pilha_labels_inicio; // para continue
 
+vector<atributos> pilha_exp_switch;
+
 void empilha_escopo() {
 	pilha_de_tabelas.push_back(map<string, variavel>());
 }
@@ -82,7 +84,7 @@ void materializa_operando(atributos&, string&);
 void converte_para_float(atributos&, string&);
 %}
 
-%token TK_NUM TK_ID TK_INT TK_NUM_FLOAT TK_CHAR TK_CARACTER TK_BOOL TK_BOOL_LIT TK_OPERADOR_RELACIONAL TK_NOT TK_AND TK_OR TK_FLOAT TK_CAST_INT TK_CAST_FLOAT TK_IF TK_ELSE	TK_WHILE TK_DO TK_FOR TK_CONTINUE TK_BREAK
+%token TK_NUM TK_ID TK_INT TK_NUM_FLOAT TK_CHAR TK_CARACTER TK_BOOL TK_BOOL_LIT TK_OPERADOR_RELACIONAL TK_NOT TK_AND TK_OR TK_FLOAT TK_CAST_INT TK_CAST_FLOAT TK_IF TK_ELSE	TK_WHILE TK_DO TK_FOR TK_CONTINUE TK_BREAK TK_SWITCH TK_CASE TK_DEFAULT
 
 %start S
 
@@ -240,6 +242,31 @@ COMANDO     : TK_ID '=' L ';'
 								$7.traducao +
 								label_fim + ":\n";
 			}
+			| TK_SWITCH '(' L ')'
+			{
+				if ($3.tipo != "int" && $3.tipo != "char") {
+					yyerror("condicao do switch deve ser int ou char, foi fornecido: " + $3.tipo);
+				}
+				
+				pilha_exp_switch.push_back($3);
+
+				string label_inicio = genlabelcode();
+				string label_fim = genlabelcode();
+				pilha_labels_inicio.push_back(label_inicio);
+				pilha_labels_fim.push_back(label_fim);
+			}
+			'{' CASES '}'
+			{
+				string label_fim = pilha_labels_fim.back();
+
+				$$.traducao = $3.traducao +
+							  $7.traducao +
+							  label_fim + ":\n";
+
+				pilha_labels_inicio.pop_back();
+				pilha_labels_fim.pop_back();
+				pilha_exp_switch.pop_back();							  								
+			}
 			| TK_WHILE '(' L ')'
 			{
 				string label_inicio = genlabelcode();
@@ -355,6 +382,38 @@ COMANDO     : TK_ID '=' L ';'
 			| BLOCO
 			{
 				$$.traducao = $1.traducao;
+			}
+			;
+CASES       : CASE CASES
+    		{
+				$$.traducao = $1.traducao + $2.traducao;
+			}
+			| CASE
+			{
+				$$.traducao = $1.traducao;
+			}
+			;
+CASE        : TK_CASE F ':' COMANDOS
+            {
+				atributos exp_switch = pilha_exp_switch.back();
+				
+				if (exp_switch.tipo != $2.tipo) {
+					yyerror("tipo da expressao do case nao corresponde ao tipo da expressao do switch");
+				}
+
+				string label_prox_case = genlabelcode();
+
+				string temp_comp = gentempcode("int");
+
+				$$.traducao = $2.traducao + 
+							"\t" + temp_comp + " = " + exp_switch.label + " == " + $2.label + ";\n" +
+							"\tif (!" + temp_comp + ") goto " + label_prox_case + ";\n" +
+							$4.traducao + 
+							label_prox_case + ":\n";
+			}
+			| TK_DEFAULT ':' COMANDOS
+			{
+				$$.traducao = $3.traducao;
 			}
 			;
 BLOCO		: '{'

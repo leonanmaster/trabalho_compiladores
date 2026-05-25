@@ -1,11 +1,6 @@
-int i;
-int j;
-for (i = 0; i < 3; i = i + 1) {
-    j = 0;
-    while (j < 3) {
-        j = j + 1;
-        if (j == 2) {
-            break;
-        }
-    }
+int a;
+a = 1;
+switch (a) {
+    case 'a':
+        a = 0;
 }

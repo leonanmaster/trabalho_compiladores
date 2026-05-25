@@ -339,3 +339,50 @@ if (a == 0) {
     continue;
 }
 #
+# Teste: switch simples com int e break
+int a;
+int res;
+a = 2;
+switch (a) {
+    case 1: {
+        res = 10;
+        break;
+    }
+    case 2: {
+        res = 20;
+        break;
+    }
+    default: {
+        res = 0;
+    }
+}
+#
+# Teste: switch com char e sem chaves nos cases
+char c;
+int res;
+c = 'x';
+switch (c) {
+    case 'y':
+        res = 1;
+        break;
+    case 'x':
+        res = 2;
+        break;
+}
+#
+# Teste Falha: switch com float (Erro semantico)
+float f;
+f = 1.5;
+switch (f) {
+    case 1:
+        f = 0.0;
+}
+#
+# Teste Falha: case com tipo diferente do switch (Erro semantico)
+int a;
+a = 1;
+switch (a) {
+    case 'a':
+        a = 0;
+}
+#

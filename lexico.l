@@ -30,7 +30,7 @@ OPERADOR_RELACIONAL {IGUAL_IGUAL}|{MAIOR_QUE}|{MENOR_QUE}|{MAIOR_IGUAL}|{MENOR_I
 
 {DELIM} 	{}
 
-[+*-/=;]		{ return *yytext; }
+[+*-/=;:]		{ return *yytext; }
 
 [(){}]		{ return *yytext; }
 
@@ -66,8 +66,13 @@ OPERADOR_RELACIONAL {IGUAL_IGUAL}|{MAIOR_QUE}|{MENOR_QUE}|{MAIOR_IGUAL}|{MENOR_I
 "if"        { return TK_IF; }
 "else"      { return TK_ELSE; }
 
+"switch"    { return TK_SWITCH; }
+"case"      { return TK_CASE; }
+"default"   { return TK_DEFAULT; }
+
 "while"     { return TK_WHILE; }
 "do"        { return TK_DO; }
+
 "for"       { return TK_FOR; }
 
 "continue"  { return TK_CONTINUE; }
