@@ -86,6 +86,9 @@ void converte_para_float(atributos&, string&);
 
 %token TK_NUM TK_ID TK_INT TK_NUM_FLOAT TK_CHAR TK_CARACTER TK_BOOL TK_BOOL_LIT TK_OPERADOR_RELACIONAL TK_NOT TK_AND TK_OR TK_FLOAT TK_CAST_INT TK_CAST_FLOAT TK_IF TK_ELSE	TK_WHILE TK_DO TK_FOR TK_CONTINUE TK_BREAK TK_SWITCH TK_CASE TK_DEFAULT
 
+%nonassoc LOWER_THAN_ELSE
+%nonassoc TK_ELSE
+
 %start S
 
 %left '+' '-' '*' '/' '='
@@ -212,7 +215,7 @@ COMANDO     : TK_ID '=' L ';'
 				tipos_temporarios[var_recebedora.nome_sistema] = "int";
 			}
 			}
-			| TK_IF '(' L ')' COMANDO // para permitir if sem chaves, aplicando apenas ao comando seguinte
+			| TK_IF '(' L ')' COMANDO %prec LOWER_THAN_ELSE // para permitir if sem chaves, aplicando apenas ao comando seguinte
 			{
 				if ($3.tipo != "bool") {
 					yyerror("condicao do if deve ser bool, foi fornecido: " + $3.tipo);
