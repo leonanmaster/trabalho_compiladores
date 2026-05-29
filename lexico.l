@@ -24,6 +24,8 @@ DIFERENTE "!="
 
 OPERADOR_RELACIONAL {IGUAL_IGUAL}|{MAIOR_QUE}|{MENOR_QUE}|{MAIOR_IGUAL}|{MENOR_IGUAL}|{DIFERENTE}
 
+STRING_LITERAL "'"({LETRA}|{ESPACO}|{DIGITO})*"'"
+
 %%
 
 "\n"		{ linha++; }
@@ -40,7 +42,18 @@ OPERADOR_RELACIONAL {IGUAL_IGUAL}|{MAIOR_QUE}|{MENOR_QUE}|{MAIOR_IGUAL}|{MENOR_I
 
 {CARACTERE_CHAR} {yylval.label = yytext; return TK_CARACTER;}
 
+{STRING_LITERAL} {
+    yylval.label = yytext;
+    return TK_STRING_LITERAL;
+}
+
+"string"   { return TK_STRING; }
+
 "char"     {return TK_CHAR;}
+
+"in"       { return TK_IN; }
+
+">>"       { return TK_SHIFT_RIGHT; }
 
 {OPERADOR_RELACIONAL} { yylval.label = yytext; return TK_OPERADOR_RELACIONAL; }
 

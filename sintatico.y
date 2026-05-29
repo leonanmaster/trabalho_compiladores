@@ -21,6 +21,7 @@ struct atributos
 	string label;
 	string traducao;
 	string tipo;
+	int    tamanho;
 };
 
 struct variavel
@@ -82,9 +83,10 @@ atributos verifica_not(atributos operando);
 bool precisa_materializar(const atributos&);
 void materializa_operando(atributos&, string&);
 void converte_para_float(atributos&, string&);
+int tamanho_string_literal(string literal);
 %}
 
-%token TK_NUM TK_ID TK_INT TK_NUM_FLOAT TK_CHAR TK_CARACTER TK_BOOL TK_BOOL_LIT TK_OPERADOR_RELACIONAL TK_NOT TK_AND TK_OR TK_FLOAT TK_CAST_INT TK_CAST_FLOAT TK_IF TK_ELSE	TK_WHILE TK_DO TK_FOR TK_CONTINUE TK_BREAK TK_SWITCH TK_CASE TK_DEFAULT
+%token TK_NUM TK_ID TK_INT TK_NUM_FLOAT TK_CHAR TK_CARACTER TK_BOOL TK_BOOL_LIT TK_OPERADOR_RELACIONAL TK_NOT TK_AND TK_OR TK_FLOAT TK_CAST_INT TK_CAST_FLOAT TK_IF TK_ELSE	TK_WHILE TK_DO TK_FOR TK_CONTINUE TK_BREAK TK_SWITCH TK_CASE TK_DEFAULT TK_STRING_LITERAL TK_STRING
 
 %nonassoc LOWER_THAN_ELSE
 %nonassoc TK_ELSE
@@ -99,13 +101,18 @@ S 			: COMANDOS
 			{
 				codigo_gerado = "/*Compilador FOCA*/\n"
 								"#include <stdio.h>\n"
+								"#include <string.h>\n"
 								"int main(void) {\n";
 				
 				for (int i = 1; i <= var_temp_qnt; i++){
 					string nome_temp = "t" + to_string(i);
 					string tipo = tipos_temporarios[nome_temp];
 
-					codigo_gerado += "\t" + tipo + " " + nome_temp + ";\n";
+					if (tipo == "string") {
+						codigo_gerado += "\tchar* " + nome_temp + ";\n";
+					} else {
+						codigo_gerado += "\t" + tipo + " " + nome_temp + ";\n";
+					}
 				}
 
 				codigo_gerado += "\n";
@@ -222,8 +229,10 @@ COMANDO     : TK_ID '=' L ';'
 				}
 
 				string label_fim = genlabelcode();
+				string temp_not = gentempcode("int");
 				$$.traducao = $3.traducao +
-								"\tif (!" + $3.label + ") goto " + label_fim + ";\n" +
+								"\t" + temp_not + " = !" + $3.label + ";\n" +
+								"\tif (" + temp_not + ") goto " + label_fim + ";\n" +
 								$5.traducao +
 								label_fim + ":\n";
 
@@ -236,9 +245,12 @@ COMANDO     : TK_ID '=' L ';'
 
 				string label_else = genlabelcode();
 				string label_fim = genlabelcode();
+				string temp_not = gentempcode("int");
 
 				$$.traducao = $3.traducao +
-								"\tif (!" + $3.label + ") goto " + label_else + ";\n" +
+
+								"\t" + temp_not + " = !" + $3.label + ";\n" +
+								"\tif (" + temp_not + ") goto " + label_else + ";\n" +
 								$5.traducao +
 								"\tgoto " + label_fim + ";\n" +
 								label_else + ":\n" +
@@ -287,10 +299,12 @@ COMANDO     : TK_ID '=' L ';'
 
 				string label_inicio = pilha_labels_inicio.back();
             	string label_fim = pilha_labels_fim.back();
+				string temp_not = gentempcode("int");
 
 				$$.traducao = label_inicio + ":\n" +
 								$3.traducao +
-								"\tif (!" + $3.label + ") goto " + label_fim + ";\n" +
+								"\t" + temp_not + " = !" + $3.label + ";\n" +
+								"\tif (" + temp_not + ") goto " + label_fim + ";\n" +
 								$6.traducao +
 								"\tgoto " + label_inicio + ";\n" +
 								label_fim + ":\n";
@@ -315,16 +329,34 @@ COMANDO     : TK_ID '=' L ';'
 
 				string label_inicio = pilha_labels_inicio.back();
 				string label_fim = pilha_labels_fim.back();
+				string temp_not = gentempcode("int");
 
 				$$.traducao = label_inicio + ":\n" +
 								$3.traducao +
 								$6.traducao +
-								"\tif (!" + $6.label + ") goto " + label_fim + ";\n" +
+								"\t" + temp_not + " = !" + $6.label + ";\n" +
+								"\tif (" + temp_not + ") goto " + label_fim + ";\n" +
 								"\tgoto " + label_inicio + ";\n" +
 								label_fim + ":\n";
 
 				pilha_labels_inicio.pop_back();
                 pilha_labels_fim.pop_back();
+			}
+			| TK_STRING TK_ID ';'
+			{
+				auto& escopo_atual = pilha_de_tabelas.back();
+
+				if (escopo_atual.find($2.label) != escopo_atual.end()) {
+					yyerror("variavel ja declarada neste escopo: " + $2.label);
+				} else {
+					variavel var;
+					var.nome_usuario = $2.label;
+					var.nome_sistema = gentempcode("string");
+					var.tipo = "string";
+					escopo_atual[var.nome_usuario] = var;
+				}
+
+				$$.traducao = "";
 			}
 			| TK_FOR '(' TK_ID '=' L ';' L ';' TK_ID '=' L ')' 
 			{
@@ -351,12 +383,14 @@ COMANDO     : TK_ID '=' L ';'
 
 				string label_inicio = pilha_labels_inicio.back();
 				string label_fim = pilha_labels_fim.back();
+				string temp_not = gentempcode("int");
 
 				$$.traducao = 	$5.traducao + 
 								"\t" + var_contador.nome_sistema + " = " + $5.label + ";\n" + 
 								label_inicio + ":\n" + 
 								$7.traducao + 
-								"\tif (!" + $7.label + ") goto " + label_fim + ";\n" + 
+								"\t" + temp_not + " = !" + $7.label + ";\n" +
+								"\tif (" + temp_not + ") goto " + label_fim + ";\n" + 
 								$14.traducao + 
 								$11.traducao + 
 								"\t" + var_atualizacao.nome_sistema + " = " + $11.label + ";\n" + 
@@ -407,10 +441,12 @@ CASE        : TK_CASE F ':' COMANDOS
 				string label_prox_case = genlabelcode();
 
 				string temp_comp = gentempcode("int");
+				string temp_not = gentempcode("int");
 
 				$$.traducao = $2.traducao + 
 							"\t" + temp_comp + " = " + exp_switch.label + " == " + $2.label + ";\n" +
-							"\tif (!" + temp_comp + ") goto " + label_prox_case + ";\n" +
+							"\t" + temp_not + " = !" + temp_comp + ";\n" +
+							"\tif (" + temp_not + ") goto " + label_prox_case + ";\n" +
 							$4.traducao + 
 							label_prox_case + ":\n";
 			}
@@ -519,6 +555,26 @@ F 			: TK_NUM
 				$$.tipo = var.tipo;
 				$$.traducao = "";
 			}
+			| TK_STRING_LITERAL
+			{
+				int tamanho = tamanho_string_literal($1.label);
+				int tamanho_malloc = tamanho + 1;
+
+				$$.label = gentempcode("string");
+				$$.tipo = "string";
+				$$.tamanho = tamanho;
+
+				tipos_temporarios[$$.label] = "string";
+
+				string conteudo = $1.label;
+
+				// troca aspas simples por aspas duplas para gerar C válido
+				conteudo[0] = '"';
+				conteudo[conteudo.size() - 1] = '"';
+
+				$$.traducao = "\t" + $$.label + " = (char*) malloc(" + to_string(tamanho_malloc) + ");\n";
+				$$.traducao += "\tstrcpy(" + $$.label + ", " + conteudo + ");\n";
+			}
 			| TK_CARACTER
 			{
 				$$.label = gentempcode("char");
@@ -548,6 +604,11 @@ F 			: TK_NUM
 #include "lex.yy.c"
 
 int yyparse();
+
+int tamanho_string_literal(string literal)
+{
+    return literal.size() - 2;
+}
 
 string gentempcode(string tipo)
 {
