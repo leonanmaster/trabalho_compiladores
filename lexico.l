@@ -52,8 +52,10 @@ STRING_LITERAL "'"({LETRA}|{ESPACO}|{DIGITO})*"'"
 "char"     {return TK_CHAR;}
 
 "in"       { return TK_IN; }
+"out"      { return TK_OUT; }
 
 ">>"       { return TK_SHIFT_RIGHT; }
+"<<"       { return TK_SHIFT_LEFT; }
 
 {OPERADOR_RELACIONAL} { yylval.label = yytext; return TK_OPERADOR_RELACIONAL; }
 

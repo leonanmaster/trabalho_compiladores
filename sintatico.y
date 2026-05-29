@@ -84,9 +84,10 @@ bool precisa_materializar(const atributos&);
 void materializa_operando(atributos&, string&);
 void converte_para_float(atributos&, string&);
 int tamanho_string_literal(string literal);
+string gera_tamanho_string(string texto, string temp_tamanho);
 %}
 
-%token TK_NUM TK_ID TK_INT TK_NUM_FLOAT TK_CHAR TK_CARACTER TK_BOOL TK_BOOL_LIT TK_OPERADOR_RELACIONAL TK_NOT TK_AND TK_OR TK_FLOAT TK_CAST_INT TK_CAST_FLOAT TK_IF TK_ELSE	TK_WHILE TK_DO TK_FOR TK_CONTINUE TK_BREAK TK_SWITCH TK_CASE TK_DEFAULT TK_STRING_LITERAL TK_STRING
+%token TK_NUM TK_ID TK_INT TK_NUM_FLOAT TK_CHAR TK_CARACTER TK_BOOL TK_BOOL_LIT TK_OPERADOR_RELACIONAL TK_NOT TK_AND TK_OR TK_FLOAT TK_CAST_INT TK_CAST_FLOAT TK_IF TK_ELSE	TK_WHILE TK_DO TK_FOR TK_CONTINUE TK_BREAK TK_SWITCH TK_CASE TK_DEFAULT TK_STRING_LITERAL TK_STRING TK_IN TK_SHIFT_RIGHT TK_OUT TK_SHIFT_LEFT
 
 %nonassoc LOWER_THAN_ELSE
 %nonassoc TK_ELSE
@@ -100,8 +101,10 @@ int tamanho_string_literal(string literal);
 S 			: COMANDOS
 			{
 				codigo_gerado = "/*Compilador FOCA*/\n"
-								"#include <stdio.h>\n"
-								"#include <string.h>\n"
+								"#include <iostream>\n"
+								"#include <cstdlib>\n"
+								"#include <cstring>\n"
+								"using namespace std;\n\n"
 								"int main(void) {\n";
 				
 				for (int i = 1; i <= var_temp_qnt; i++){
@@ -110,6 +113,8 @@ S 			: COMANDOS
 
 					if (tipo == "string") {
 						codigo_gerado += "\tchar* " + nome_temp + ";\n";
+					} else if (tipo == "string_buffer") {
+						codigo_gerado += "\tchar " + nome_temp + "[256];\n";
 					} else {
 						codigo_gerado += "\t" + tipo + " " + nome_temp + ";\n";
 					}
@@ -137,6 +142,50 @@ COMANDO     : TK_ID '=' L ';'
 					$$.traducao = $3.traducao + "\t" + var_recebedora.nome_sistema + " = " + $3.label + ";\n";
 				}
 			}
+			| TK_OUT TK_SHIFT_LEFT L ';'
+			{
+				$$.traducao = $3.traducao + "\tcout << " + $3.label + ";\n";
+			}
+			| TK_IN TK_SHIFT_RIGHT TK_ID ';'
+			{
+				variavel var = obtem_variavel($3.label);
+
+				if (var.tipo == "int") {
+					$$.traducao = "\tcin >> " + var.nome_sistema + ";\n";
+				}
+				else if (var.tipo == "float") {
+					$$.traducao = "\tcin >> " + var.nome_sistema + ";\n";
+				}
+				else if (var.tipo == "char") {
+					$$.traducao = "\tcin >> " + var.nome_sistema + ";\n";
+				}
+				else if (var.tipo == "bool") {
+					$$.traducao = "\tcin >> " + var.nome_sistema + ";\n";
+				}
+				else if (var.tipo == "string") {
+					string buffer = gentempcode("string_buffer");
+					string temp_tamanho = gentempcode("int");
+					string temp_tamanho_final = gentempcode("int");
+
+					$$.traducao = "";
+
+					// lê a linha inteira, inclusive com espaços
+					$$.traducao += "\tcin >> ws;\n";
+					$$.traducao += "\tcin.getline(" + buffer + ", 256);\n";
+
+					// calcula o tamanho sem strlen
+					$$.traducao += gera_tamanho_string(buffer, temp_tamanho);
+
+					// aloca dinamicamente
+					$$.traducao += "\t" + temp_tamanho_final + " = " + temp_tamanho + " + 1;\n";
+					$$.traducao += "\t" + var.nome_sistema + " = (char*) malloc(" + temp_tamanho_final + ");\n";
+					$$.traducao += "\tstrcpy(" + var.nome_sistema + ", " + buffer + ");\n";
+				}
+				else {
+					yyerror("tipo invalido para entrada: " + var.tipo);
+				}
+			}
+			
 			| TK_INT TK_ID ';'
 			{
 				auto& escopo_atual = pilha_de_tabelas.back(); // apenas referência para evitar copias desnecessárias
@@ -608,6 +657,28 @@ int yyparse();
 int tamanho_string_literal(string literal)
 {
     return literal.size() - 2;
+}
+
+string gera_tamanho_string(string texto, string temp_tamanho)
+{
+    string temp_char = gentempcode("char");
+    string temp_cond = gentempcode("int");
+
+    string label_inicio = genlabelcode();
+    string label_fim = genlabelcode();
+
+    string codigo;
+
+    codigo += "\t" + temp_tamanho + " = 0;\n";
+    codigo += label_inicio + ":\n";
+    codigo += "\t" + temp_char + " = " + texto + "[" + temp_tamanho + "];\n";
+    codigo += "\t" + temp_cond + " = " + temp_char + " == '\\0';\n";
+    codigo += "\tif (" + temp_cond + ") goto " + label_fim + ";\n";
+    codigo += "\t" + temp_tamanho + " = " + temp_tamanho + " + 1;\n";
+    codigo += "\tgoto " + label_inicio + ";\n";
+    codigo += label_fim + ":\n";
+
+    return codigo;
 }
 
 string gentempcode(string tipo)

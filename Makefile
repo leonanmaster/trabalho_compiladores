@@ -22,7 +22,7 @@ translate: glf
 		./glf < $(FILE)
 
 run: glf
-		./glf < $(FILE) > /tmp/foca_output.c && gcc /tmp/foca_output.c -o /tmp/foca_output && /tmp/foca_output
+		./glf < $(FILE) > /tmp/foca_output.c && gpp /tmp/foca_output.c -o /tmp/foca_output && /tmp/foca_output
 
 test: glf
 	@pass=0; fail=0; \

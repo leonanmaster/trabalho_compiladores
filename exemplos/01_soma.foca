@@ -1,2 +1,9 @@
-char a;
-a = 'as';
+string nome;
+int idade;
+
+in >> idade;
+in >> nome;
+out << nome;
+char quebra;
+quebra = 'n';
+out << 'quebra';
