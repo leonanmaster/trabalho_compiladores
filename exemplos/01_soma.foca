@@ -1,9 +1,11 @@
-string nome;
-int idade;
+string resultado;
+string a;
+string b;
+string c;
+a = 'boom';
+b = ' dia';
+c = 'kjlljj';
 
-in >> idade;
-in >> nome;
-out << nome;
-char quebra;
-quebra = 'n';
-out << 'quebra';
+resultado = 'ols' + 'ola' + c;
+
+out << resultado;

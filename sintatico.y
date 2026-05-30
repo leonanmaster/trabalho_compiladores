@@ -793,6 +793,29 @@ atributos gera_operacao_comparacao(atributos recebedor_resultado, atributos esq,
 atributos gera_operacao(atributos recebedor_resultado, atributos esq, atributos dir, string operador)
 {
 	atributos resultado;
+	
+	
+	if (operador == "+" && esq.tipo == "string" && dir.tipo == "string") {
+		string tamanho_esq = gentempcode("int");
+		string tamanho_dir = gentempcode("int");
+		string tamanho_total = gentempcode("int");
+
+		resultado.label = gentempcode("string");
+		resultado.tipo = "string";
+		resultado.traducao = esq.traducao + dir.traducao;
+
+		resultado.traducao += gera_tamanho_string(esq.label, tamanho_esq);
+		resultado.traducao += gera_tamanho_string(dir.label, tamanho_dir);
+
+		resultado.traducao += "\t" + tamanho_total + " = " + tamanho_esq + " + " + tamanho_dir + " + 1;\n";
+		resultado.traducao += "\t" + resultado.label + " = (char*) malloc(" + tamanho_total + ");\n";
+
+		resultado.traducao += "\tstrcpy(" + resultado.label + ", " + esq.label + ");\n";
+		resultado.traducao += "\tstrcpy(" + resultado.label + " + " + tamanho_esq + ", " + dir.label + ");\n";
+
+		return resultado;
+	}	
+
 	string tipo_resultado = tabela_de_conversao[{esq.tipo, dir.tipo}];
 
 	if (tipo_resultado == "") {
