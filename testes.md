@@ -386,3 +386,62 @@ switch (a) {
         a = 0;
 }
 #
+string resultado;
+resultado = 'Bom' + ' dia';
+out << resultado;
+#
+string resultado;
+resultado = '' + 'teste';
+out << resultado;
+#
+string resultado;
+resultado = 'teste' + '';
+out << resultado;
+#
+string parte1;
+string parte2;
+string resultado;
+parte1 = 'Bom';
+parte2 = ' dia';
+resultado = parte1 + parte2;
+out << resultado;
+#
+string resultado;
+resultado = 'Bom' + ' dia' + ' Rafael';
+out << resultado;
+#
+string resultado;
+resultado = 'idade ' + 22;
+#
+bool iguais;
+iguais = 'Rafael' == 'Rafael';
+out << iguais;
+#
+bool iguais;
+iguais = 'Rafael' == 'Pedro';
+out << iguais;
+#
+bool iguais;
+iguais = '' == '';
+out << iguais;
+#
+bool iguais;
+iguais = 'Rafael' == 'Rafa';
+out << iguais;
+#
+string nome1;
+string nome2;
+bool iguais;
+nome1 = 'Rafael';
+nome2 = 'Rafael';
+iguais = nome1 == nome2;
+out << iguais;
+#
+bool iguais;
+iguais = 'Rafael' == 'Rafael ';
+out << iguais;
+#
+bool iguais;
+iguais = 'abc' == 10;
+out << iguais;
+#

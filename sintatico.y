@@ -744,6 +744,53 @@ atributos gera_operacao_logica(atributos recebedor_resultado, atributos esq, atr
 atributos gera_operacao_comparacao(atributos recebedor_resultado, atributos esq, atributos dir, string operador)
 {
 	atributos resultado;
+
+	if (esq.tipo == "string" && dir.tipo == "string" && (operador == "==" || operador == "!=")) {
+		resultado.label = gentempcode("int");
+		resultado.tipo = "bool";
+		resultado.traducao = esq.traducao + dir.traducao;
+
+		string indice = gentempcode("int");
+		string caractere_esq = gentempcode("char");
+		string caractere_dir = gentempcode("char");
+
+		string label_inicio = genlabelcode();
+		string label_diferentes = genlabelcode();
+		string label_fim = genlabelcode();
+
+		string valor_inicial;
+		string valor_quando_diferentes;
+
+		if (operador == "==") {
+			valor_inicial = "1";
+			valor_quando_diferentes = "0";
+		}
+		else {
+			valor_inicial = "0";
+			valor_quando_diferentes = "1";
+		}
+
+		resultado.traducao += "\t" + resultado.label + " = " + valor_inicial + ";\n";
+		resultado.traducao += "\t" + indice + " = 0;\n";
+
+		resultado.traducao += label_inicio + ":\n";
+		resultado.traducao += "\t" + caractere_esq + " = " + esq.label + "[" + indice + "];\n";
+		resultado.traducao += "\t" + caractere_dir + " = " + dir.label + "[" + indice + "];\n";
+
+		resultado.traducao += "\tif (" + caractere_esq + " != " + caractere_dir + ") goto " + label_diferentes + ";\n";
+		resultado.traducao += "\tif (" + caractere_esq + " == '\\0') goto " + label_fim + ";\n";
+
+		resultado.traducao += "\t" + indice + " = " + indice + " + 1;\n";
+		resultado.traducao += "\tgoto " + label_inicio + ";\n";
+
+		resultado.traducao += label_diferentes + ":\n";
+		resultado.traducao += "\t" + resultado.label + " = " + valor_quando_diferentes + ";\n";
+
+		resultado.traducao += label_fim + ":\n";
+
+		return resultado;
+	}
+
 	string tipo_operandos = tabela_de_conversao[{esq.tipo, dir.tipo}];
 
 	if (esq.tipo == "char" && dir.tipo == "char"){
