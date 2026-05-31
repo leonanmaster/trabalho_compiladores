@@ -1,7 +1,5 @@
 int a;
-int b;
-float resultado;
-a = 2;
-b = 5;
-resultado = a / b;
-out << resultado;
+for (int a = 0; a < 4; a = a + 1) {
+    int a = 2;
+    out << a;
+}

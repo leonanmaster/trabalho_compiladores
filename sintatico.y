@@ -449,6 +449,77 @@ COMANDO     : TK_ID '=' L ';'
 				pilha_labels_inicio.pop_back();
                 pilha_labels_fim.pop_back();
 			}
+			| TK_FOR '('
+			{
+				empilha_escopo();
+			}
+			TK_INT TK_ID '=' L ';'
+			{
+				auto& escopo_atual = pilha_de_tabelas.back();
+
+				if (escopo_atual.find($5.label) != escopo_atual.end()) {
+					yyerror("variavel ja declarada neste escopo: " + $5.label);
+				} else {
+					variavel var;
+					var.nome_usuario = $5.label;
+					var.nome_sistema = gentempcode("int");
+					var.tipo = "int";
+					escopo_atual[var.nome_usuario] = var;
+
+					if (var.tipo != $7.tipo) {
+						yyerror("tipo do resultado da operação é incompatível com o tipo esperado: " + $7.tipo + " e " + var.tipo);
+					}
+
+					$$.traducao = $7.traducao + "\t" + var.nome_sistema + " = " + $7.label + ";\n";
+				}
+			}
+			L ';' TK_ID '=' L ')'
+			{
+				string label_inicio = genlabelcode();
+				string label_fim = genlabelcode();
+
+				pilha_labels_inicio.push_back(label_inicio);
+				pilha_labels_fim.push_back(label_fim);
+			}
+			COMANDO
+			{
+				variavel var_contador = obtem_variavel($5.label);
+
+				if (var_contador.tipo != "int") {
+					yyerror("contador de for deve ser int, foi fornecido: " + var_contador.tipo);
+				}
+
+				if ($10.tipo != "bool") {
+					yyerror("condicao de for deve ser bool, foi fornecido: " + $10.tipo);
+				}
+
+				variavel var_atualizacao = obtem_variavel($12.label);
+
+				if (var_atualizacao.tipo != "int") {
+					yyerror("atualizacao de for deve ser int, foi fornecido: " + var_atualizacao.tipo);
+				}
+
+				string label_inicio = pilha_labels_inicio.back();
+				string label_fim = pilha_labels_fim.back();
+				string temp_not = gentempcode("int");
+
+				$$.traducao =  $7.traducao +
+							"\t" + var_contador.nome_sistema + " = " + $7.label + ";\n" +
+							label_inicio + ":\n" +
+							$10.traducao +
+							"\t" + temp_not + " = !" + $10.label + ";\n" +
+							"\tif (" + temp_not + ") goto " + label_fim + ";\n" +
+							$17.traducao +
+							$14.traducao +
+							"\t" + var_atualizacao.nome_sistema + " = " + $14.label + ";\n" +
+							"\tgoto " + label_inicio + ";\n" +
+							label_fim + ":\n";
+
+				pilha_labels_inicio.pop_back();
+				pilha_labels_fim.pop_back();
+
+				desempilha_escopo();
+			}
 			| TK_BREAK ';'
 			{
 				if (pilha_labels_fim.empty()) {
@@ -952,9 +1023,6 @@ atributos gera_operacao(atributos recebedor_resultado, atributos esq, atributos 
 
 	string tipo_resultado = tabela_de_conversao[{esq.tipo, dir.tipo}];
 
-	if (operador == "/" && tipo_resultado != "") {
-		tipo_resultado = "float";
-	}
 
 	if (tipo_resultado == "") {
 		yyerror("tipos incompatíveis: " + esq.tipo + " e " + dir.tipo);
