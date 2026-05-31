@@ -448,7 +448,7 @@ COMANDO     : TK_ID '=' L ';'
 				
 				pilha_labels_inicio.pop_back();
                 pilha_labels_fim.pop_back();
-			} 
+			}
 			| TK_BREAK ';'
 			{
 				if (pilha_labels_fim.empty()) {
@@ -858,8 +858,14 @@ atributos gera_operacao_comparacao(atributos recebedor_resultado, atributos esq,
 		resultado.traducao += "\t" + caractere_esq + " = " + esq.label + "[" + indice + "];\n";
 		resultado.traducao += "\t" + caractere_dir + " = " + dir.label + "[" + indice + "];\n";
 
-		resultado.traducao += "\tif (" + caractere_esq + " != " + caractere_dir + ") goto " + label_diferentes + ";\n";
-		resultado.traducao += "\tif (" + caractere_esq + " == '\\0') goto " + label_fim + ";\n";
+		string temp_comparacao;
+		temp_comparacao = gentempcode("int");
+		resultado.traducao += "\t" + temp_comparacao + " = " + caractere_esq + " != " + caractere_dir + ";\n";
+		resultado.traducao += "\tif (" + temp_comparacao + ") goto " + label_diferentes + ";\n";
+
+		temp_comparacao = gentempcode("int");
+		resultado.traducao += "\t" + temp_comparacao + " = " + caractere_esq + " == '\\0'"  + ";\n";
+		resultado.traducao += "\tif (" + temp_comparacao + ") goto " + label_fim + ";\n";
 
 		resultado.traducao += "\t" + indice + " = " + indice + " + 1;\n";
 		resultado.traducao += "\tgoto " + label_inicio + ";\n";
