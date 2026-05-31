@@ -7,24 +7,21 @@ using namespace std;
 int main(void) {
 	int t1;
 	int t2;
-	int t3;
+	float t3;
 	int t4;
 	int t5;
-	int t6;
-	int t7;
+	float t6;
+	float t7;
+	float t8;
 
-	t2 = 0;
-	t1 = t2;
-L1:
-	t3 = 5;
-	t4 = t1 < t3;
-	t7 = !t4;
-	if (t7) goto L2;
-	cout << t1;
-	t5 = 1;
-	t6 = t1 + t5;
-	t1 = 1;
-	goto L1;
-L2:
+	t4 = 2;
+	t1 = t4;
+	t5 = 5;
+	t2 = t5;
+	t7 = (float) t1;
+	t8 = (float) t2;
+	t6 = t7 / t8;
+	t3 = t6;
+	cout << t3;
 	return 0;
 }

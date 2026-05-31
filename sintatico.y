@@ -952,6 +952,10 @@ atributos gera_operacao(atributos recebedor_resultado, atributos esq, atributos 
 
 	string tipo_resultado = tabela_de_conversao[{esq.tipo, dir.tipo}];
 
+	if (operador == "/" && tipo_resultado != "") {
+		tipo_resultado = "float";
+	}
+
 	if (tipo_resultado == "") {
 		yyerror("tipos incompatíveis: " + esq.tipo + " e " + dir.tipo);
 		return resultado;
