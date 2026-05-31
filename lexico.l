@@ -40,16 +40,15 @@ STRING_LITERAL "'"({LETRA}|{ESPACO}|{DIGITO})*"'"
 
 {NUM_FLOAT} {yylval.label = yytext; return TK_NUM_FLOAT;}
 
-{CARACTERE_CHAR} {yylval.label = yytext; return TK_CARACTER;}
 
 {STRING_LITERAL} {
     yylval.label = yytext;
     return TK_STRING_LITERAL;
 }
 
+
 "string"   { return TK_STRING; }
 
-"char"     {return TK_CHAR;}
 
 "in"       { return TK_IN; }
 "out"      { return TK_OUT; }

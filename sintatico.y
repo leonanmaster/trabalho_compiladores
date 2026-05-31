@@ -469,6 +469,87 @@ COMANDO     : TK_ID '=' L ';'
 			{
 				$$.traducao = $1.traducao;
 			}
+			| TK_INT TK_ID '=' L ';'
+			{
+				auto& escopo_atual = pilha_de_tabelas.back();
+
+				if (escopo_atual.find($2.label) != escopo_atual.end()) {
+					yyerror("variavel ja declarada neste escopo: " + $2.label);
+				} else {
+					variavel var;
+					var.nome_usuario = $2.label;
+					var.nome_sistema = gentempcode("int");
+					var.tipo = "int";
+					escopo_atual[var.nome_usuario] = var;
+
+					if (var.tipo != $4.tipo) {
+						yyerror("tipo do resultado da operação é incompatível com o tipo esperado: " + $4.tipo + " e " + var.tipo);
+					}
+
+					$$.traducao = $4.traducao + "\t" + var.nome_sistema + " = " + $4.label + ";\n";
+				}
+			}
+			| TK_FLOAT TK_ID '=' L ';'
+			{
+				auto& escopo_atual = pilha_de_tabelas.back();
+
+				if (escopo_atual.find($2.label) != escopo_atual.end()) {
+					yyerror("variavel ja declarada neste escopo: " + $2.label);
+				} else {
+					variavel var;
+					var.nome_usuario = $2.label;
+					var.nome_sistema = gentempcode("float");
+					var.tipo = "float";
+					escopo_atual[var.nome_usuario] = var;
+
+					if (var.tipo != $4.tipo) {
+						yyerror("tipo do resultado da operação é incompatível com o tipo esperado: " + $4.tipo + " e " + var.tipo);
+					}
+
+					$$.traducao = $4.traducao + "\t" + var.nome_sistema + " = " + $4.label + ";\n";
+				}
+			}
+			;
+			| TK_BOOL TK_ID '=' L ';'
+			{
+				auto& escopo_atual = pilha_de_tabelas.back();
+
+				if (escopo_atual.find($2.label) != escopo_atual.end()) {
+					yyerror("variavel ja declarada neste escopo: " + $2.label);
+				} else {
+					variavel var;
+					var.nome_usuario = $2.label;
+					var.nome_sistema = gentempcode("int");
+					var.tipo = "bool";
+					escopo_atual[var.nome_usuario] = var;
+
+					if (var.tipo != $4.tipo) {
+						yyerror("tipo do resultado da operação é incompatível com o tipo esperado: " + $4.tipo + " e " + var.tipo);
+					}
+
+					$$.traducao = $4.traducao + "\t" + var.nome_sistema + " = " + $4.label + ";\n";
+				}
+			}
+			| TK_STRING TK_ID '=' L ';'
+			{
+				auto& escopo_atual = pilha_de_tabelas.back();
+
+				if (escopo_atual.find($2.label) != escopo_atual.end()) {
+					yyerror("variavel ja declarada neste escopo: " + $2.label);
+				} else {
+					variavel var;
+					var.nome_usuario = $2.label;
+					var.nome_sistema = gentempcode("string");
+					var.tipo = "string";
+					escopo_atual[var.nome_usuario] = var;
+
+					if (var.tipo != $4.tipo) {
+						yyerror("tipo do resultado da operação é incompatível com o tipo esperado: " + $4.tipo + " e " + var.tipo);
+					}
+
+					$$.traducao = $4.traducao + "\t" + var.nome_sistema + " = " + $4.label + ";\n";
+				}
+			}
 			;
 CASES       : CASE CASES
     		{

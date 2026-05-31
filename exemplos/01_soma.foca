@@ -1,3 +1,0 @@
-if ('Rafael' != 'Pedro') {
-    out << 'diferentes';
-}
