@@ -1,5 +1,8 @@
-int a;
-for (int a = 0; a < 4; a = a + 1) {
-    int a = 2;
-    out << a;
+string a;
+a = '1';
+switch (a) {
+    case '10':
+        a = '0';
 }
+
+out << a;

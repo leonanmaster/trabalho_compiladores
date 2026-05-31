@@ -308,8 +308,8 @@ COMANDO     : TK_ID '=' L ';'
 			}
 			| TK_SWITCH '(' L ')'
 			{
-				if ($3.tipo != "int" && $3.tipo != "char") {
-					yyerror("condicao do switch deve ser int ou char, foi fornecido: " + $3.tipo);
+				if ($3.tipo != "int" && $3.tipo != "string") {
+					yyerror("condicao do switch deve ser int ou string de tamanho 1, foi fornecido: " + $3.tipo);
 				}
 				
 				pilha_exp_switch.push_back($3);
@@ -632,24 +632,45 @@ CASES       : CASE CASES
 			}
 			;
 CASE        : TK_CASE F ':' COMANDOS
-            {
+			{
 				atributos exp_switch = pilha_exp_switch.back();
-				
+
 				if (exp_switch.tipo != $2.tipo) {
 					yyerror("tipo da expressao do case nao corresponde ao tipo da expressao do switch");
 				}
 
-				string label_prox_case = genlabelcode();
+				if (exp_switch.tipo == "string" && $2.tamanho != 1) {
+					yyerror("case com string deve ter tamanho 1");
+				}
 
-				string temp_comp = gentempcode("int");
+				string label_prox_case = genlabelcode();
 				string temp_not = gentempcode("int");
 
-				$$.traducao = $2.traducao + 
-							"\t" + temp_comp + " = " + exp_switch.label + " == " + $2.label + ";\n" +
-							"\t" + temp_not + " = !" + temp_comp + ";\n" +
-							"\tif (" + temp_not + ") goto " + label_prox_case + ";\n" +
-							$4.traducao + 
-							label_prox_case + ":\n";
+				if (exp_switch.tipo == "string") {
+					atributos comparacao = gera_operacao_comparacao(
+						atributos(),
+						exp_switch,
+						$2,
+						"=="
+					);
+
+					$$.traducao = $2.traducao +
+								comparacao.traducao +
+								"\t" + temp_not + " = !" + comparacao.label + ";\n" +
+								"\tif (" + temp_not + ") goto " + label_prox_case + ";\n" +
+								$4.traducao +
+								label_prox_case + ":\n";
+				}
+				else {
+					string temp_comp = gentempcode("int");
+
+					$$.traducao = $2.traducao +
+								"\t" + temp_comp + " = " + exp_switch.label + " == " + $2.label + ";\n" +
+								"\t" + temp_not + " = !" + temp_comp + ";\n" +
+								"\tif (" + temp_not + ") goto " + label_prox_case + ";\n" +
+								$4.traducao +
+								label_prox_case + ":\n";
+				}
 			}
 			| TK_DEFAULT ':' COMANDOS
 			{
