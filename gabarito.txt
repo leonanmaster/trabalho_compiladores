@@ -108,3 +108,107 @@ L1:
 L2:
 	return 0;
 }
+
+============================ TESTE 4
+#include <iostream>
+#include <cstdlib>
+#include <cstring>
+using namespace std;
+
+int main(void) {
+	int* t1;
+	int t2;
+	int t3;
+	int t4;
+	int t5;
+	int t6;
+	int t7;
+	int t8;
+	int t9;
+	int t10;
+	int t11;
+	int t12;
+	int t13;
+	int t14;
+	int t15;
+	int t16;
+	int t17;
+	int t18;
+
+	t1 = (int*) malloc(5 * sizeof(int));
+	t3 = 0;
+	t2 = t3;
+L1:
+	t4 = 5;
+	t5 = t2 < t4;
+	t9 = !t5;
+	if (t9) goto L2;
+	t7 = 10;
+	t8 = t2 * t7;
+	t1[t2] = t8;
+	t6 = t2 + 1;
+	t2 = t6;
+	goto L1;
+L2:
+	t11 = 0;
+	t10 = t11;
+	t12 = 0;
+	t2 = t12;
+L3:
+	t13 = 5;
+	t14 = t2 < t13;
+	t18 = !t14;
+	if (t18) goto L4;
+	t15 = t1[t2];
+	t16 = t10 + t15;
+	t10 = t16;
+	t17 = t2 + 1;
+	t2 = t17;
+	goto L3;
+L4:
+	return 0;
+}
+
+============================ TESTE 5
+#include <iostream>
+#include <cstdlib>
+#include <cstring>
+using namespace std;
+
+int main(void) {
+	int* t1;
+	int t2;
+	int t3;
+	int t4;
+	int t5;
+	int t6;
+	int t7;
+	int t8;
+	int t9;
+	int t10;
+	int t11;
+	int t12;
+	int t13;
+	int t14;
+	int t15;
+	int t16;
+
+	t1 = (int*) malloc(12 * sizeof(int));
+	t5 = 2;
+	t2 = t5;
+	t6 = 1;
+	t3 = t6;
+	t7 = 50;
+	t8 = t2 * 4;
+	t9 = t8 + t3;
+	t1[t9] = t7;
+	t10 = 2;
+	t11 = 1;
+	t12 = t10 * 4;
+	t13 = t12 + t11;
+	t14 = t1[t13];
+	t15 = 10;
+	t16 = t14 + t15;
+	t4 = t16;
+	return 0;
+}

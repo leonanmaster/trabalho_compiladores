@@ -24,3 +24,32 @@ for (i = 5; i > 0; i--) {
     soma = soma + i;
 }
 #
+# Teste: 4
+int vet[5];
+int i;
+
+for (i = 0; i < 5; i++) {
+    vet[i] = i * 10;
+}
+
+int soma;
+soma = 0;
+i = 0;
+
+while (i < 5) {
+    soma += vet[i];
+    i++;
+}
+#
+# Teste: 5
+int mat[3][4];
+int l;
+int c;
+int res;
+
+l = 2;
+c = 1;
+mat[l][c] = 50;
+
+res = mat[2][1] + 10;
+#

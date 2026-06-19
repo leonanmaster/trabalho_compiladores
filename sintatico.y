@@ -29,6 +29,10 @@ struct variavel
 	string nome_usuario;
 	string nome_sistema;
 	string tipo;
+	bool eh_array = false;
+	int tamanho_array = 0;
+	bool eh_matriz = false; 
+    int colunas_matriz = 0;
 };
 
 // map<string, variavel> variaveis;
@@ -115,6 +119,12 @@ S 			: COMANDOS
 						codigo_gerado += "\tchar* " + nome_temp + ";\n";
 					} else if (tipo == "string_buffer") {
 						codigo_gerado += "\tchar " + nome_temp + "[256];\n";
+					} else if (tipo == "int_array") {
+						codigo_gerado += "\tint* " + nome_temp + ";\n";
+					} else if (tipo == "float_array") {
+						codigo_gerado += "\tfloat* " + nome_temp + ";\n";
+					}else if (tipo == "bool_array") {
+						codigo_gerado += "\tbool* " + nome_temp + ";\n";
 					} else {
 						codigo_gerado += "\t" + tipo + " " + nome_temp + ";\n";
 					}
@@ -141,6 +151,178 @@ COMANDO     : TK_ID '=' L ';'
 				} else {
 					$$.traducao = $3.traducao + "\t" + var_recebedora.nome_sistema + " = " + $3.label + ";\n";
 				}
+			}
+			| TK_INT TK_ID '[' TK_NUM ']' ';'
+			{
+				auto& escopo_atual = pilha_de_tabelas.back();
+				
+				if (escopo_atual.find($2.label) != escopo_atual.end()) {
+					yyerror("Variavel ja declarada neste escopo: " + $2.label);
+				} else {
+					variavel var;
+					var.nome_usuario = $2.label;
+					var.nome_sistema = gentempcode("int_array"); // Usa a nova tag para o topo do C
+					var.tipo = "int"; // O tipo real dos dados lá dentro continua a ser 'int'
+					var.eh_array = true;
+					var.tamanho_array = stoi($4.label); // Guarda o tamanho declarado
+					
+					escopo_atual[var.nome_usuario] = var;
+
+					// Gera a alocação dinâmica no código intermediário
+					$$.traducao = "\t" + var.nome_sistema + " = (int*) malloc(" + $4.label + " * sizeof(int));\n";
+				}
+			}
+			| TK_FLOAT TK_ID '[' TK_NUM ']' ';'
+			{
+				auto& escopo_atual = pilha_de_tabelas.back();
+				
+				if (escopo_atual.find($2.label) != escopo_atual.end()) {
+					yyerror("Variavel ja declarada neste escopo: " + $2.label);
+				} else {
+					variavel var;
+					var.nome_usuario = $2.label;
+					var.nome_sistema = gentempcode("float_array"); 
+					var.tipo = "float"; 
+					var.eh_array = true;
+					var.tamanho_array = stoi($4.label); 
+					
+					escopo_atual[var.nome_usuario] = var;
+
+					$$.traducao = "\t" + var.nome_sistema + " = (float*) malloc(" + $4.label + " * sizeof(float));\n";
+				}
+			}
+			| TK_BOOL TK_ID '[' TK_NUM ']' ';'
+			{
+				auto& escopo_atual = pilha_de_tabelas.back();
+				
+				if (escopo_atual.find($2.label) != escopo_atual.end()) {
+					yyerror("Variavel ja declarada neste escopo: " + $2.label);
+				} else {
+					variavel var;
+					var.nome_usuario = $2.label;
+					var.nome_sistema = gentempcode("bool_array"); 
+					var.tipo = "bool"; 
+					var.eh_array = true;
+					var.tamanho_array = stoi($4.label); 
+					
+					escopo_atual[var.nome_usuario] = var;
+
+					$$.traducao = "\t" + var.nome_sistema + " = (bool*) malloc(" + $4.label + " * sizeof(bool));\n";
+				}
+			}
+			| TK_INT TK_ID '[' TK_NUM ']' '[' TK_NUM ']' ';'
+			{
+				auto& escopo_atual = pilha_de_tabelas.back();
+				
+				if (escopo_atual.find($2.label) != escopo_atual.end()) {
+					yyerror("Variavel ja declarada neste escopo: " + $2.label);
+				} else {
+					variavel var;
+					var.nome_usuario = $2.label;
+					var.nome_sistema = gentempcode("int_array"); // Mapeia para int* no topo do C
+					var.tipo = "int";
+					var.eh_array = true; 
+					var.eh_matriz = true;
+					var.colunas_matriz = stoi($7.label); // Guarda a quantidade de colunas para a matemática posterior
+					
+					int total_elementos = stoi($4.label) * stoi($7.label);
+					
+					escopo_atual[var.nome_usuario] = var;
+
+					// Aloca o espaço total linearizado na memória
+					$$.traducao = "\t" + var.nome_sistema + " = (int*) malloc(" + to_string(total_elementos) + " * sizeof(int));\n";
+				}
+			}
+			| TK_FLOAT TK_ID '[' TK_NUM ']' '[' TK_NUM ']' ';'
+			{
+				auto& escopo_atual = pilha_de_tabelas.back();
+				
+				if (escopo_atual.find($2.label) != escopo_atual.end()) {
+					yyerror("Variavel ja declarada neste escopo: " + $2.label);
+				} else {
+					variavel var;
+					var.nome_usuario = $2.label;
+					var.nome_sistema = gentempcode("float_array"); 
+					var.tipo = "float";
+					var.eh_array = true; 
+					var.eh_matriz = true;
+					var.colunas_matriz = stoi($7.label); 
+					
+					int total_elementos = stoi($4.label) * stoi($7.label);
+					
+					escopo_atual[var.nome_usuario] = var;
+
+					$$.traducao = "\t" + var.nome_sistema + " = (float*) malloc(" + to_string(total_elementos) + " * sizeof(float));\n";
+				}
+			}
+			| TK_BOOL TK_ID '[' TK_NUM ']' '[' TK_NUM ']' ';'
+			{
+				auto& escopo_atual = pilha_de_tabelas.back();
+				
+				if (escopo_atual.find($2.label) != escopo_atual.end()) {
+					yyerror("Variavel ja declarada neste escopo: " + $2.label);
+				} else {
+					variavel var;
+					var.nome_usuario = $2.label;
+					var.nome_sistema = gentempcode("bool_array"); 
+					var.tipo = "bool";
+					var.eh_array = true; 
+					var.eh_matriz = true;
+					var.colunas_matriz = stoi($7.label); 
+					
+					int total_elementos = stoi($4.label) * stoi($7.label);
+					
+					escopo_atual[var.nome_usuario] = var;
+
+					$$.traducao = "\t" + var.nome_sistema + " = (bool*) malloc(" + to_string(total_elementos) + " * sizeof(bool));\n";
+				}
+			}
+			| TK_ID '[' L ']' '[' L ']' '=' L ';'
+			{
+				variavel var_matriz = obtem_variavel($1.label);
+				
+				if (!var_matriz.eh_matriz) {
+					yyerror("A variavel '" + var_matriz.nome_usuario + "' nao e uma matriz.");
+				}
+				if ($3.tipo != "int" || $6.tipo != "int") {
+					yyerror("Os indices da matriz devem ser do tipo int.");
+				}
+				if (var_matriz.tipo != $9.tipo) {
+					yyerror("Tipo incompativel na atribuicao da matriz.");
+				}
+
+				// Cria temporários para calcular o índice real em C
+				string t_mult = gentempcode("int");
+				string t_idx = gentempcode("int");
+
+				// Monta a matemática de linearização: index = (linha * colunas) + coluna
+				string calculo_indice = 
+					"\t" + t_mult + " = " + $3.label + " * " + to_string(var_matriz.colunas_matriz) + ";\n" +
+					"\t" + t_idx + " = " + t_mult + " + " + $6.label + ";\n";
+
+				$$.traducao = $3.traducao + 
+							$6.traducao + 
+							$9.traducao + 
+							calculo_indice + 
+							"\t" + var_matriz.nome_sistema + "[" + t_idx + "] = " + $9.label + ";\n";
+			}
+			| TK_ID '[' L ']' '=' L ';'
+			{
+				variavel var_recebedora = obtem_variavel($1.label);
+				
+				if (!var_recebedora.eh_array) {
+					yyerror("A variavel '" + var_recebedora.nome_usuario + "' nao e um vetor.");
+				}
+				if ($3.tipo != "int") {
+					yyerror("O indice do vetor deve ser do tipo int.");
+				}
+				if (var_recebedora.tipo != $6.tipo) {
+					yyerror("Tipo incompativel na atribuicao do vetor.");
+				}
+
+				$$.traducao = $3.traducao + 
+							$6.traducao + 
+							"\t" + var_recebedora.nome_sistema + "[" + $3.label + "] = " + $6.label + ";\n";
 			}
 			| TK_ID TK_MAIS_IGUAL L ';'
 			{
@@ -929,6 +1111,49 @@ F 			: TK_NUM
 				tipos_temporarios[$$.label] = "int";
 				$$.traducao = "\t" + $$.label + " = " + $1.label + ";\n";
 
+			}
+			| TK_ID '[' L ']'
+			{
+				variavel var_lida = obtem_variavel($1.label);
+				
+				if (!var_lida.eh_array) {
+					yyerror("A variavel '" + var_lida.nome_usuario + "' nao e um vetor.");
+				}
+				if ($3.tipo != "int") {
+					yyerror("O indice do vetor deve ser do tipo int.");
+				}
+
+				$$.label = gentempcode(var_lida.tipo);
+				$$.tipo = var_lida.tipo;
+				
+				$$.traducao = $3.traducao + 
+							"\t" + $$.label + " = " + var_lida.nome_sistema + "[" + $3.label + "];\n";
+			}
+			| TK_ID '[' L ']' '[' L ']'
+			{
+				variavel var_matriz = obtem_variavel($1.label);
+				
+				if (!var_matriz.eh_matriz) {
+					yyerror("A variavel '" + var_matriz.nome_usuario + "' nao e uma matriz.");
+				}
+				if ($3.tipo != "int" || $6.tipo != "int") {
+					yyerror("Os indices da matriz devem ser do tipo int.");
+				}
+
+				string t_mult = gentempcode("int");
+				string t_idx = gentempcode("int");
+				string t_res = gentempcode(var_matriz.tipo);
+
+				string calculo_indice = 
+					"\t" + t_mult + " = " + $3.label + " * " + to_string(var_matriz.colunas_matriz) + ";\n" +
+					"\t" + t_idx + " = " + t_mult + " + " + $6.label + ";\n";
+
+				$$.label = t_res;
+				$$.tipo = var_matriz.tipo;
+				$$.traducao = $3.traducao + 
+							$6.traducao + 
+							calculo_indice + 
+							"\t" + t_res + " = " + var_matriz.nome_sistema + "[" + t_idx + "];\n";
 			}
 			| '(' L ')'
 			{

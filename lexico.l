@@ -43,7 +43,8 @@ STRING_LITERAL "'"({LETRA}|{ESPACO}|{DIGITO})*"'"
 
 [(){}]		{ return *yytext; }
 
-
+"["         { return *yytext; }
+"]"         { return *yytext; }
 
 {NUM_FLOAT} {yylval.label = yytext; return TK_NUM_FLOAT;}
 
