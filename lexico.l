@@ -32,6 +32,13 @@ STRING_LITERAL "'"({LETRA}|{ESPACO}|{DIGITO})*"'"
 
 {DELIM} 	{}
 
+"++"    { return TK_MAIS_MAIS; }
+"--"    { return TK_MENOS_MENOS; }
+"+="    { return TK_MAIS_IGUAL; }
+"-="    { return TK_MENOS_IGUAL; }
+"*="    { return TK_VEZES_IGUAL; }
+"/="    { return TK_DIVIDE_IGUAL; }
+
 [+*-/=;:]		{ return *yytext; }
 
 [(){}]		{ return *yytext; }

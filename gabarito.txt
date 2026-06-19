@@ -1,412 +1,9 @@
-===== TESTE 1 =====
-./glf < exemplos/01_soma.foca
-/*Compilador FOCA*/
-#include <stdio.h>
-int main(void) {
-	char t1;
-	char t2;
+============================ TESTE 1
+#include <iostream>
+#include <cstdlib>
+#include <cstring>
+using namespace std;
 
-	t2 = '1';
-	t1 = t2;
-	return 0;
-}
-
-===== TESTE 2 =====
-./glf < exemplos/01_soma.foca
-Erro na linha 3: syntax error
-
-===== TESTE 3 =====
-./glf < exemplos/01_soma.foca
-/*Compilador FOCA*/
-#include <stdio.h>
-int main(void) {
-	int t1;
-	int t2;
-
-	t2 = 0;
-	t1 = t2;
-	return 0;
-}
-
-===== TESTE 4 =====
-./glf < exemplos/01_soma.foca
-/*Compilador FOCA*/
-#include <stdio.h>
-int main(void) {
-	int t1;
-	int t2;
-	int t3;
-	int t4;
-
-	t2 = 1;
-	t3 = 2;
-	t4 = t2 < t3;
-	t1 = t4;
-	return 0;
-}
-
-===== TESTE 5 =====
-./glf < exemplos/01_soma.foca
-/*Compilador FOCA*/
-#include <stdio.h>
-int main(void) {
-	int t1;
-	int t2;
-	int t3;
-	int t4;
-	int t5;
-	int t6;
-
-	t3 = 2;
-	t2 = t3;
-	t5 = 3;
-	t4 = t5;
-	t6 = t2 < t4;
-	t1 = t6;
-	return 0;
-}
-
-===== TESTE 6 =====
-./glf < exemplos/01_soma.foca
-Erro na linha 2: syntax error
-
-===== TESTE 7 =====
-./glf < exemplos/01_soma.foca
-/*Compilador FOCA*/
-#include <stdio.h>
-int main(void) {
-	float t1;
-	int t2;
-	int t3;
-	float t4;
-	float t5;
-	float t6;
-
-	t3 = 10;
-	t2 = t3;
-	t4 = 2.5;
-	t6 = (float) t2;
-	t5 = t6 + t4;
-	t1 = t5;
-	return 0;
-}
-
-===== TESTE 8 =====
-./glf < exemplos/01_soma.foca
-/*Compilador FOCA*/
-#include <stdio.h>
-int main(void) {
-	int t1;
-	float t2;
-
-	t1 = (int) t2;
-	return 0;
-}
-
-===== TESTE 9 =====
-./glf < exemplos/01_soma.foca
-/*Compilador FOCA*/
-#include <stdio.h>
-int main(void) {
-	float t1;
-	float t2;
-
-	t2 = 20.5;
-	t1 = t2;
-	return 0;
-}
-
-===== TESTE 10 =====
-./glf < exemplos/01_soma.foca
-Erro na linha 2: variavel nao declarada: a
-/*Compilador FOCA*/
-#include <stdio.h>
-int main(void) {
-	int t1;
-
-	t1 = (int) ;
-	return 0;
-}
-
-===== TESTE 11 =====
-./glf < exemplos/01_soma.foca
-Erro na linha 2: variavel nao declarada: b
-Erro na linha 2: variavel nao declarada: a
-Erro na linha 2: tipos incompatíveis:  e 
-Erro na linha 2: tipo do resultado da operação é incompatível com o tipo esperado:  e float
-/*Compilador FOCA*/
-#include <stdio.h>
-int main(void) {
-	float t1;
-
-	return 0;
-}
-
-===== TESTE 12 =====
-./glf < exemplos/01_soma.foca
-Erro na linha 2: syntax error
-
-===== TESTE 13 =====
-./glf < exemplos/01_soma.foca
-/*Compilador FOCA*/
-#include <stdio.h>
-int main(void) {
-	int t1;
-	int t2;
-	int t3;
-	int t4;
-	int t5;
-	int t6;
-	int t7;
-
-	t3 = 10;
-	t1 = t3;
-	t4 = 2;
-	t5 = t1 * t4;
-	t6 = 3;
-	t7 = t5 + t6;
-	t2 = t7;
-	return 0;
-}
-
-===== TESTE 14 =====
-./glf < exemplos/01_soma.foca
-/*Compilador FOCA*/
-#include <stdio.h>
-int main(void) {
-	int t1;
-	int t2;
-	int t3;
-	int t4;
-	int t5;
-	int t6;
-	int t7;
-	int t8;
-
-	t4 = 8;
-	t1 = t4;
-	t5 = 2;
-	t2 = t5;
-	t6 = t1 + t2;
-	t7 = t1 - t2;
-	t8 = t6 * t7;
-	t3 = t8;
-	return 0;
-}
-
-===== TESTE 15 =====
-./glf < exemplos/01_soma.foca
-/*Compilador FOCA*/
-#include <stdio.h>
-int main(void) {
-	float t1;
-	float t2;
-	float t3;
-	float t4;
-	float t5;
-	float t6;
-	float t7;
-
-	t3 = 2.5;
-	t1 = t3;
-	t4 = 2.0;
-	t5 = t1 / t4;
-	t6 = 1.25;
-	t7 = t5 + t6;
-	t2 = t7;
-	return 0;
-}
-
-===== TESTE 16 =====
-./glf < exemplos/01_soma.foca
-/*Compilador FOCA*/
-#include <stdio.h>
-int main(void) {
-	int t1;
-	float t2;
-	int t3;
-	float t4;
-	float t5;
-	float t6;
-
-	t3 = 4;
-	t1 = t3;
-	t4 = 3.75;
-	t6 = (float) t1;
-	t5 = t6 + t4;
-	t2 = t5;
-	return 0;
-}
-
-===== TESTE 17 =====
-./glf < exemplos/01_soma.foca
-/*Compilador FOCA*/
-#include <stdio.h>
-int main(void) {
-	float t1;
-	int t2;
-	float t3;
-
-	t3 = 9.8;
-	t1 = t3;
-	t2 = (int) t1;
-	return 0;
-}
-
-===== TESTE 18 =====
-./glf < exemplos/01_soma.foca
-/*Compilador FOCA*/
-#include <stdio.h>
-int main(void) {
-	int t1;
-	float t2;
-	int t3;
-
-	t3 = 7;
-	t1 = t3;
-	t2 = (float) t1;
-	return 0;
-}
-
-===== TESTE 19 =====
-./glf < exemplos/01_soma.foca
-/*Compilador FOCA*/
-#include <stdio.h>
-int main(void) {
-	int t1;
-	int t2;
-	int t3;
-	int t4;
-
-	t2 = 1;
-	t3 = 0;
-	t4 = t2 && t3;
-	t1 = t4;
-	return 0;
-}
-
-===== TESTE 20 =====
-./glf < exemplos/01_soma.foca
-/*Compilador FOCA*/
-#include <stdio.h>
-int main(void) {
-	int t1;
-	int t2;
-	int t3;
-	int t4;
-
-	t2 = 1;
-	t3 = 0;
-	t4 = t2 || t3;
-	t1 = t4;
-	return 0;
-}
-
-===== TESTE 21 =====
-./glf < exemplos/01_soma.foca
-/*Compilador FOCA*/
-#include <stdio.h>
-int main(void) {
-	int t1;
-	int t2;
-	int t3;
-
-	t2 = 0;
-	t3 = !t2;
-	t1 = t3;
-	return 0;
-}
-
-===== TESTE 22 =====
-./glf < exemplos/01_soma.foca
-/*Compilador FOCA*/
-#include <stdio.h>
-int main(void) {
-	int t1;
-	int t2;
-	int t3;
-	int t4;
-	int t5;
-	int t6;
-
-	t4 = 5;
-	t2 = t4;
-	t5 = 5;
-	t3 = t5;
-	t6 = t2 == t3;
-	t1 = t6;
-	return 0;
-}
-
-===== TESTE 23 =====
-./glf < exemplos/01_soma.foca
-/*Compilador FOCA*/
-#include <stdio.h>
-int main(void) {
-	int t1;
-	int t2;
-	int t3;
-	int t4;
-	int t5;
-	int t6;
-
-	t4 = 3;
-	t2 = t4;
-	t5 = 9;
-	t3 = t5;
-	t6 = t2 <= t3;
-	t1 = t6;
-	return 0;
-}
-
-===== TESTE 24 =====
-./glf < exemplos/01_soma.foca
-/*Compilador FOCA*/
-#include <stdio.h>
-int main(void) {
-	int t1;
-	float t2;
-	float t3;
-	float t4;
-	float t5;
-	float t6;
-
-	t4 = 4.5;
-	t2 = t4;
-	t5 = 2.25;
-	t3 = t5;
-	t6 = t2 > t3;
-	t1 = t6;
-	return 0;
-}
-
-===== TESTE 25 =====
-./glf < exemplos/01_soma.foca
-/*Compilador FOCA*/
-#include <stdio.h>
-int main(void) {
-	int t1;
-	int t2;
-	float t3;
-	int t4;
-	float t5;
-	float t6;
-	float t7;
-
-	t4 = 3;
-	t2 = t4;
-	t5 = 3.0;
-	t3 = t5;
-	t7 = (float) t2;
-	t6 = t7 >= t3;
-	t1 = t6;
-	return 0;
-}
-
-===== TESTE 26 =====
-./glf < exemplos/01_soma.foca
-/*Compilador FOCA*/
-#include <stdio.h>
 int main(void) {
 	int t1;
 	int t2;
@@ -418,24 +15,36 @@ int main(void) {
 	int t8;
 	int t9;
 	int t10;
+	int t11;
+	int t12;
 
-	t5 = 1;
-	t2 = t5;
-	t6 = 2;
-	t3 = t6;
+	t2 = 10;
+	t1 = t2;
+	t3 = 5;
+	t4 = t1 + t3;
+	t1 = t4;
+	t5 = 2;
+	t6 = t1 - t5;
+	t1 = t6;
 	t7 = 3;
-	t4 = t7;
-	t8 = t2 < t3;
-	t9 = t3 < t4;
-	t10 = t8 && t9;
+	t8 = t1 * t7;
+	t1 = t8;
+	t9 = 2;
+	t10 = t1 / t9;
 	t1 = t10;
+	t11 = t1 - 1;
+	t1 = t11;
+	t12 = t1 + 1;
+	t1 = t12;
 	return 0;
 }
 
-===== TESTE 27 =====
-./glf < exemplos/01_soma.foca
-/*Compilador FOCA*/
-#include <stdio.h>
+============================ TESTE 2
+#include <iostream>
+#include <cstdlib>
+#include <cstring>
+using namespace std;
+
 int main(void) {
 	int t1;
 	int t2;
@@ -447,149 +56,55 @@ int main(void) {
 	int t8;
 	int t9;
 
-	t4 = 1;
-	t2 = t4;
-	t5 = 2;
-	t3 = t5;
-	t6 = t2 + t3;
-	t7 = 5;
-	t8 = t6 > t7;
-	t9 = !t8;
-	t1 = t9;
+	t3 = 0;
+	t2 = t3;
+	t4 = 0;
+	t1 = t4;
+L1:
+	t5 = 5;
+	t6 = t1 < t5;
+	t9 = !t6;
+	if (t9) goto L2;
+	t8 = t2 + t1;
+	t2 = t8;
+	t7 = t1 + 1;
+	t1 = t7;
+	goto L1;
+L2:
 	return 0;
 }
 
-===== TESTE 28 =====
-./glf < exemplos/01_soma.foca
-/*Compilador FOCA*/
-#include <stdio.h>
-int main(void) {
-	char t1;
-	char t2;
+============================ TESTE 3
+#include <iostream>
+#include <cstdlib>
+#include <cstring>
+using namespace std;
 
-	t2 = 'z';
-	t1 = t2;
-	return 0;
-}
-
-===== TESTE 29 =====
-./glf < exemplos/01_soma.foca
-/*Compilador FOCA*/
-#include <stdio.h>
-int main(void) {
-	char t1;
-	char t2;
-	char t3;
-
-	t3 = 'x';
-	t1 = t3;
-	t2 = t1;
-	return 0;
-}
-
-===== TESTE 30 =====
-./glf < exemplos/01_soma.foca
-/*Compilador FOCA*/
-#include <stdio.h>
 int main(void) {
 	int t1;
-	int t2;
-	int t3;
-	int t4;
-
-	t2 = 10;
-	t3 = 2;
-	t4 = t2 / t3;
-	t1 = t4;
-	return 0;
-}
-
-===== TESTE 31 =====
-./glf < exemplos/01_soma.foca
-/*Compilador FOCA*/
-#include <stdio.h>
-int main(void) {
-	float t1;
 	int t2;
 	int t3;
 	int t4;
 	int t5;
-	float t6;
-	float t7;
-	float t8;
+	int t6;
+	int t7;
+	int t8;
+	int t9;
 
-	t3 = 7;
-	t4 = 8;
-	t5 = t3 + t4;
-	t2 = t5;
-	t6 = 2.0;
-	t8 = (float) t2;
-	t7 = t8 / t6;
+	t3 = 0;
+	t2 = t3;
+	t4 = 5;
+	t1 = t4;
+L1:
+	t5 = 0;
+	t6 = t1 > t5;
+	t9 = !t6;
+	if (t9) goto L2;
+	t8 = t2 + t1;
+	t2 = t8;
+	t7 = t1 - 1;
 	t1 = t7;
+	goto L1;
+L2:
 	return 0;
 }
-
-===== TESTE 32 =====
-./glf < exemplos/01_soma.foca
-Erro na linha 2: variavel nao declarada: y
-Erro na linha 2: tipos incompatíveis:  e int
-Erro na linha 2: tipo do resultado da operação é incompatível com o tipo esperado:  e int
-/*Compilador FOCA*/
-#include <stdio.h>
-int main(void) {
-	int t1;
-	int t2;
-
-	return 0;
-}
-
-===== TESTE 33 =====
-./glf < exemplos/01_soma.foca
-Erro na linha 2: tipo do resultado da operação é incompatível com o tipo esperado: bool e int
-/*Compilador FOCA*/
-#include <stdio.h>
-int main(void) {
-	int t1;
-	int t2;
-
-	return 0;
-}
-
-===== TESTE 34 =====
-./glf < exemplos/01_soma.foca
-Erro na linha 2: tipo do resultado da operação é incompatível com o tipo esperado: int e bool
-/*Compilador FOCA*/
-#include <stdio.h>
-int main(void) {
-	int t1;
-	int t2;
-	int t3;
-	int t4;
-
-	return 0;
-}
-
-===== TESTE 35 =====
-./glf < exemplos/01_soma.foca
-Erro na linha 2: tipo do resultado da operação é incompatível com o tipo esperado: int e char
-/*Compilador FOCA*/
-#include <stdio.h>
-int main(void) {
-	char t1;
-	int t2;
-
-	return 0;
-}
-
-===== TESTE 36 =====
-./glf < exemplos/01_soma.foca
-Erro na linha 2: tipo do resultado da operação é incompatível com o tipo esperado: char e float
-/*Compilador FOCA*/
-#include <stdio.h>
-int main(void) {
-	float t1;
-	char t2;
-
-	return 0;
-}
-

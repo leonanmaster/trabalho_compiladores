@@ -87,7 +87,7 @@ int tamanho_string_literal(string literal);
 string gera_tamanho_string(string texto, string temp_tamanho);
 %}
 
-%token TK_NUM TK_ID TK_INT TK_NUM_FLOAT TK_CHAR TK_CARACTER TK_BOOL TK_BOOL_LIT TK_OPERADOR_RELACIONAL TK_NOT TK_AND TK_OR TK_FLOAT TK_CAST_INT TK_CAST_FLOAT TK_IF TK_ELSE	TK_WHILE TK_DO TK_FOR TK_CONTINUE TK_BREAK TK_SWITCH TK_CASE TK_DEFAULT TK_STRING_LITERAL TK_STRING TK_IN TK_SHIFT_RIGHT TK_OUT TK_SHIFT_LEFT
+%token TK_NUM TK_ID TK_INT TK_NUM_FLOAT TK_CHAR TK_CARACTER TK_BOOL TK_BOOL_LIT TK_OPERADOR_RELACIONAL TK_NOT TK_AND TK_OR TK_FLOAT TK_CAST_INT TK_CAST_FLOAT TK_IF TK_ELSE	TK_WHILE TK_DO TK_FOR TK_CONTINUE TK_BREAK TK_SWITCH TK_CASE TK_DEFAULT TK_STRING_LITERAL TK_STRING TK_IN TK_SHIFT_RIGHT TK_OUT TK_SHIFT_LEFT TK_MAIS_MAIS TK_MENOS_MENOS TK_MAIS_IGUAL TK_MENOS_IGUAL TK_VEZES_IGUAL TK_DIVIDE_IGUAL
 
 %nonassoc LOWER_THAN_ELSE
 %nonassoc TK_ELSE
@@ -141,6 +141,125 @@ COMANDO     : TK_ID '=' L ';'
 				} else {
 					$$.traducao = $3.traducao + "\t" + var_recebedora.nome_sistema + " = " + $3.label + ";\n";
 				}
+			}
+			| TK_ID TK_MAIS_IGUAL L ';'
+			{
+				variavel var_recebedora = obtem_variavel($1.label);
+				
+				if (var_recebedora.tipo != "float" && var_recebedora.tipo != "int"){
+					yyerror("Operadores compostos só pode ser aplicado a int ou float, foi fornecido: " + var_recebedora.tipo);
+				}
+
+				// transformei a variável recetora num nó "atributos" para enganar a função gera operação, que espera um nó "atributos" como argumento. Assim, consigo reaproveitar a função gera_operacao para fazer a operação de soma e as verificações de tipo, sem precisar criar uma função específica para o caso de operadores compostos. Para casos como: float a = 2.5; a += 3;
+				atributos atr_esq;
+				atr_esq.label = var_recebedora.nome_sistema;
+				atr_esq.tipo = var_recebedora.tipo;
+				atr_esq.traducao = "";
+
+				atributos operacao = gera_operacao(atributos(), atr_esq, $3, "+");
+				
+				if (var_recebedora.tipo == "int" && operacao.tipo == "float") {
+					yyerror("Nao e possivel somar um float a um int sem conversao explicita.");
+				}
+				
+				$$.traducao = 
+							operacao.traducao + 
+							"\t" + var_recebedora.nome_sistema + " = " + operacao.label + ";\n";
+			}
+			| TK_ID TK_MENOS_IGUAL L ';'
+			{
+				variavel var_recebedora = obtem_variavel($1.label);
+				
+				if (var_recebedora.tipo != "float" && var_recebedora.tipo != "int"){
+					yyerror("Operadores compostos só pode ser aplicado a int ou float, foi fornecido: " + var_recebedora.tipo);
+				}
+
+				atributos atr_esq;
+				atr_esq.label = var_recebedora.nome_sistema;
+				atr_esq.tipo = var_recebedora.tipo;
+				atr_esq.traducao = "";
+
+				atributos operacao = gera_operacao(atributos(), atr_esq, $3, "-");
+				
+				if (var_recebedora.tipo == "int" && operacao.tipo == "float") {
+					yyerror("Nao e possivel subtrair um float de um int sem conversao explicita.");
+				}
+				
+				$$.traducao = 
+							operacao.traducao + 
+							"\t" + var_recebedora.nome_sistema + " = " + operacao.label + ";\n";
+			}
+			| TK_ID TK_VEZES_IGUAL L ';'
+			{
+				variavel var_recebedora = obtem_variavel($1.label);
+				
+				if (var_recebedora.tipo != "float" && var_recebedora.tipo != "int"){
+					yyerror("Operadores compostos só pode ser aplicado a int ou float, foi fornecido: " + var_recebedora.tipo);
+				}
+
+				atributos atr_esq;
+				atr_esq.label = var_recebedora.nome_sistema;
+				atr_esq.tipo = var_recebedora.tipo;
+				atr_esq.traducao = "";
+
+				atributos operacao = gera_operacao(atributos(), atr_esq, $3, "*");
+				
+				if (var_recebedora.tipo == "int" && operacao.tipo == "float") {
+					yyerror("Nao e possivel multiplicar um float a um int sem conversao explicita.");
+				}
+				
+				$$.traducao = 
+							operacao.traducao + 
+							"\t" + var_recebedora.nome_sistema + " = " + operacao.label + ";\n";
+			}
+			| TK_ID TK_DIVIDE_IGUAL L ';'
+			{
+				variavel var_recebedora = obtem_variavel($1.label);
+				
+				if (var_recebedora.tipo != "float" && var_recebedora.tipo != "int"){
+					yyerror("Operadores compostos só pode ser aplicado a int ou float, foi fornecido: " + var_recebedora.tipo);
+				}
+
+				atributos atr_esq;
+				atr_esq.label = var_recebedora.nome_sistema;
+				atr_esq.tipo = var_recebedora.tipo;
+				atr_esq.traducao = "";
+
+				atributos operacao = gera_operacao(atributos(), atr_esq, $3, "/");
+				
+				if (var_recebedora.tipo == "int" && operacao.tipo == "float") {
+					yyerror("Nao e possivel dividir um float por um int sem conversao explicita.");
+				}
+				
+				$$.traducao = 
+							operacao.traducao + 
+							"\t" + var_recebedora.nome_sistema + " = " + operacao.label + ";\n";
+			}
+			| TK_ID TK_MAIS_MAIS ';'
+			{
+				variavel var_recebedora = obtem_variavel($1.label);
+				
+				if (var_recebedora.tipo != "int" && var_recebedora.tipo != "float") {
+					yyerror("Operador ++ exige tipo numerico");
+				}
+
+				string temp_resultado = gentempcode(var_recebedora.tipo);
+
+				$$.traducao = "\t" + temp_resultado + " = " + var_recebedora.nome_sistema + " + 1;\n" +
+							"\t" + var_recebedora.nome_sistema + " = " + temp_resultado + ";\n";
+			}
+			| TK_ID TK_MENOS_MENOS ';'
+			{
+				variavel var_recebedora = obtem_variavel($1.label);
+				
+				if (var_recebedora.tipo != "int" && var_recebedora.tipo != "float") {
+					yyerror("Operador -- exige tipo numerico");
+				}
+
+				string temp_resultado = gentempcode(var_recebedora.tipo);
+
+				$$.traducao = "\t" + temp_resultado + " = " + var_recebedora.nome_sistema + " - 1;\n" +
+							"\t" + var_recebedora.nome_sistema + " = " + temp_resultado + ";\n";
 			}
 			| TK_OUT TK_SHIFT_LEFT L ';'
 			{
@@ -407,7 +526,7 @@ COMANDO     : TK_ID '=' L ';'
 
 				$$.traducao = "";
 			}
-			| TK_FOR '(' TK_ID '=' L ';' L ';' TK_ID '=' L ')' 
+			| TK_FOR '(' TK_ID '=' L ';' L ';' INC_DEC_FOR ')' 
 			{
 				string label_inicio = genlabelcode();
 				string label_fim = genlabelcode();
@@ -440,9 +559,8 @@ COMANDO     : TK_ID '=' L ';'
 								$7.traducao + 
 								"\t" + temp_not + " = !" + $7.label + ";\n" +
 								"\tif (" + temp_not + ") goto " + label_fim + ";\n" + 
-								$14.traducao + 
-								$11.traducao + 
-								"\t" + var_atualizacao.nome_sistema + " = " + $11.label + ";\n" + 
+								$12.traducao + 
+								$9.traducao + 
 								"\tgoto " + label_inicio + ";\n" + 
 								label_fim + ":\n";
 				
@@ -473,7 +591,7 @@ COMANDO     : TK_ID '=' L ';'
 					$$.traducao = $7.traducao + "\t" + var.nome_sistema + " = " + $7.label + ";\n";
 				}
 			}
-			L ';' TK_ID '=' L ')'
+			L ';' INC_DEC_FOR ')' 
 			{
 				string label_inicio = genlabelcode();
 				string label_fim = genlabelcode();
@@ -509,9 +627,8 @@ COMANDO     : TK_ID '=' L ';'
 							$10.traducao +
 							"\t" + temp_not + " = !" + $10.label + ";\n" +
 							"\tif (" + temp_not + ") goto " + label_fim + ";\n" +
-							$17.traducao +
-							$14.traducao +
-							"\t" + var_atualizacao.nome_sistema + " = " + $14.label + ";\n" +
+							$15.traducao +
+							$12.traducao +
 							"\tgoto " + label_inicio + ";\n" +
 							label_fim + ":\n";
 
@@ -820,6 +937,32 @@ F 			: TK_NUM
 				$$.tipo = $2.tipo;
 			}
 			;
+INC_DEC_FOR : TK_ID TK_MAIS_MAIS
+			{
+				variavel var_recebedora = obtem_variavel($1.label);
+
+				if (var_recebedora.tipo != "int") {
+					yyerror("operador de incremento só pode ser aplicado a variáveis do tipo int, mas foi fornecido: " + var_recebedora.tipo);
+				}
+
+				string temp_resultado = gentempcode("int");
+
+				$$.traducao = "\t" + temp_resultado + " = " + var_recebedora.nome_sistema + " + 1;\n" +
+							"\t" + var_recebedora.nome_sistema + " = " + temp_resultado + ";\n";
+			}
+			| TK_ID TK_MENOS_MENOS
+			{
+				variavel var_recebedora = obtem_variavel($1.label);
+
+				if (var_recebedora.tipo != "int") {
+					yyerror("operador de decremento só pode ser aplicado a variáveis do tipo int, mas foi fornecido: " + var_recebedora.tipo);
+				}
+
+				string temp_resultado = gentempcode("int");
+
+				$$.traducao = "\t" + temp_resultado + " = " + var_recebedora.nome_sistema + " - 1;\n" +
+							"\t" + var_recebedora.nome_sistema + " = " + temp_resultado + ";\n";
+			} 
 
 %%
 
