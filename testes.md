@@ -53,3 +53,13 @@ mat[l][c] = 50;
 
 res = mat[2][1] + 10;
 #
+# Teste: 6
+int vet[3] = {10, 20, 30};
+int mat[2][2] = {100, 200, 300, 400};
+
+int somavet;
+int somamat;
+
+somavet = vet[0] + vet[2];
+somamat = mat[1][0] + mat[1][1];
+#

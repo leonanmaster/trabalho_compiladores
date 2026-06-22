@@ -39,7 +39,7 @@ STRING_LITERAL "'"({LETRA}|{ESPACO}|{DIGITO})*"'"
 "*="    { return TK_VEZES_IGUAL; }
 "/="    { return TK_DIVIDE_IGUAL; }
 
-[+*-/=;:]		{ return *yytext; }
+[+*-/=;:,]		{ return *yytext; }
 
 [(){}]		{ return *yytext; }
 

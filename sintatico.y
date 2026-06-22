@@ -22,6 +22,8 @@ struct atributos
 	string traducao;
 	string tipo;
 	int    tamanho;
+	vector<string> array_labels; 
+	vector<string> array_tipos;  
 };
 
 struct variavel
@@ -919,6 +921,237 @@ COMANDO     : TK_ID '=' L ';'
 
 					$$.traducao = $4.traducao + "\t" + var.nome_sistema + " = " + $4.label + ";\n";
 				}
+			}
+			| TK_INT TK_ID '[' TK_NUM ']' '=' '{' LISTA_VALORES '}' ';'
+			{
+				auto& escopo_atual = pilha_de_tabelas.back();
+				if (escopo_atual.find($2.label) != escopo_atual.end()) {
+					yyerror("Variavel ja declarada neste escopo: " + $2.label);
+				} else {
+					int tamanho_declarado = stoi($4.label);
+					if ($8.array_labels.size() > tamanho_declarado) {
+						yyerror("Excesso de elementos na inicializacao do vetor.");
+					}
+
+					variavel var;
+					var.nome_usuario = $2.label;
+					var.nome_sistema = gentempcode("int_array");
+					var.tipo = "int";
+					var.eh_array = true;
+					var.tamanho_array = tamanho_declarado;
+					
+					escopo_atual[var.nome_usuario] = var;
+
+					string alocacao = "\t" + var.nome_sistema + " = (int*) malloc(" + $4.label + " * sizeof(int));\n";
+					string atribuicoes = "";
+
+					for (size_t i = 0; i < $8.array_labels.size(); i++) {
+						if ($8.array_tipos[i] != "int") {
+							yyerror("Tipo incompativel na inicializacao do vetor.");
+						}
+						string temp_idx = gentempcode("int");
+						atribuicoes += "\t" + temp_idx + " = " + to_string(i) + ";\n";
+						atribuicoes += "\t" + var.nome_sistema + "[" + temp_idx + "] = " + $8.array_labels[i] + ";\n";
+					}
+
+					$$.traducao = alocacao + $8.traducao + atribuicoes;
+				}
+			}
+			| TK_FLOAT TK_ID '[' TK_NUM ']' '=' '{' LISTA_VALORES '}' ';'
+			{
+				auto& escopo_atual = pilha_de_tabelas.back();
+				if (escopo_atual.find($2.label) != escopo_atual.end()) {
+					yyerror("Variavel ja declarada neste escopo: " + $2.label);
+				} else {
+					int tamanho_declarado = stoi($4.label);
+					if ($8.array_labels.size() > tamanho_declarado) {
+						yyerror("Excesso de elementos na inicializacao do vetor.");
+					}
+
+					variavel var;
+					var.nome_usuario = $2.label;
+					var.nome_sistema = gentempcode("float_array");
+					var.tipo = "float";
+					var.eh_array = true;
+					var.tamanho_array = tamanho_declarado;
+					
+					escopo_atual[var.nome_usuario] = var;
+
+					string alocacao = "\t" + var.nome_sistema + " = (float*) malloc(" + $4.label + " * sizeof(float));\n";
+					string atribuicoes = "";
+
+					for (size_t i = 0; i < $8.array_labels.size(); i++) {
+						if ($8.array_tipos[i] != "float") {
+							yyerror("Tipo incompativel na inicializacao do vetor.");
+						}
+						string temp_idx = gentempcode("float");
+						atribuicoes += "\t" + temp_idx + " = " + to_string(i) + ";\n";
+						atribuicoes += "\t" + var.nome_sistema + "[" + temp_idx + "] = " + $8.array_labels[i] + ";\n";
+					}
+
+					$$.traducao = alocacao + $8.traducao + atribuicoes;
+				}
+			}
+			| TK_BOOL TK_ID '[' TK_NUM ']' '=' '{' LISTA_VALORES '}' ';'
+			{
+				auto& escopo_atual = pilha_de_tabelas.back();
+				if (escopo_atual.find($2.label) != escopo_atual.end()) {
+					yyerror("Variavel ja declarada neste escopo: " + $2.label);
+				} else {
+					int tamanho_declarado = stoi($4.label);
+					if ($8.array_labels.size() > tamanho_declarado) {
+						yyerror("Excesso de elementos na inicializacao do vetor.");
+					}
+
+					variavel var;
+					var.nome_usuario = $2.label;
+					var.nome_sistema = gentempcode("bool_array");
+					var.tipo = "bool";
+					var.eh_array = true;
+					var.tamanho_array = tamanho_declarado;
+					
+					escopo_atual[var.nome_usuario] = var;
+
+					string alocacao = "\t" + var.nome_sistema + " = (bool*) malloc(" + $4.label + " * sizeof(bool));\n";
+					string atribuicoes = "";
+
+					for (size_t i = 0; i < $8.array_labels.size(); i++) {
+						if ($8.array_tipos[i] != "bool") {
+							yyerror("Tipo incompativel na inicializacao do vetor.");
+						}
+						string temp_idx = gentempcode("bool");
+						atribuicoes += "\t" + temp_idx + " = " + to_string(i) + ";\n";
+						atribuicoes += "\t" + var.nome_sistema + "[" + temp_idx + "] = " + $8.array_labels[i] + ";\n";
+					}
+
+					$$.traducao = alocacao + $8.traducao + atribuicoes;
+				}
+			}
+			| TK_INT TK_ID '[' TK_NUM ']' '[' TK_NUM ']' '=' '{' LISTA_VALORES '}' ';'
+			{
+				auto& escopo_atual = pilha_de_tabelas.back();
+				if (escopo_atual.find($2.label) != escopo_atual.end()) {
+					yyerror("Variavel ja declarada neste escopo: " + $2.label);
+				} else {
+					int total_elementos = stoi($4.label) * stoi($7.label);
+					if ($11.array_labels.size() > total_elementos) {
+						yyerror("Excesso de elementos na inicializacao da matriz.");
+					}
+
+					variavel var;
+					var.nome_usuario = $2.label;
+					var.nome_sistema = gentempcode("int_array");
+					var.tipo = "int";
+					var.eh_array = true;
+					var.eh_matriz = true;
+					var.colunas_matriz = stoi($7.label);
+					
+					escopo_atual[var.nome_usuario] = var;
+
+					string alocacao = "\t" + var.nome_sistema + " = (int*) malloc(" + to_string(total_elementos) + " * sizeof(int));\n";
+					string atribuicoes = "";
+
+					for (size_t i = 0; i < $11.array_labels.size(); i++) {
+						if ($11.array_tipos[i] != "int") {
+							yyerror("Tipo incompativel na inicializacao da matriz.");
+						}
+						string temp_idx = gentempcode("int");
+						atribuicoes += "\t" + temp_idx + " = " + to_string(i) + ";\n";
+						atribuicoes += "\t" + var.nome_sistema + "[" + temp_idx + "] = " + $11.array_labels[i] + ";\n";
+					}
+
+					$$.traducao = alocacao + $11.traducao + atribuicoes;
+				}
+			}
+			| TK_FLOAT TK_ID '[' TK_NUM ']' '[' TK_NUM ']' '=' '{' LISTA_VALORES '}' ';'
+			{
+				auto& escopo_atual = pilha_de_tabelas.back();
+				if (escopo_atual.find($2.label) != escopo_atual.end()) {
+					yyerror("Variavel ja declarada neste escopo: " + $2.label);
+				} else {
+					int total_elementos = stoi($4.label) * stoi($7.label);
+					if ($11.array_labels.size() > total_elementos) {
+						yyerror("Excesso de elementos na inicializacao da matriz.");
+					}
+
+					variavel var;
+					var.nome_usuario = $2.label;
+					var.nome_sistema = gentempcode("float_array");
+					var.tipo = "float";
+					var.eh_array = true;
+					var.eh_matriz = true;
+					var.colunas_matriz = stoi($7.label);
+					
+					escopo_atual[var.nome_usuario] = var;
+
+					string alocacao = "\t" + var.nome_sistema + " = (float*) malloc(" + to_string(total_elementos) + " * sizeof(float));\n";
+					string atribuicoes = "";
+
+					for (size_t i = 0; i < $11.array_labels.size(); i++) {
+						if ($11.array_tipos[i] != "float") {
+							yyerror("Tipo incompativel na inicializacao da matriz.");
+						}
+						string temp_idx = gentempcode("float");
+						atribuicoes += "\t" + temp_idx + " = " + to_string(i) + ";\n";
+						atribuicoes += "\t" + var.nome_sistema + "[" + temp_idx + "] = " + $11.array_labels[i] + ";\n";
+					}
+
+					$$.traducao = alocacao + $11.traducao + atribuicoes;
+				}
+			}
+			| TK_BOOL TK_ID '[' TK_NUM ']' '[' TK_NUM ']' '=' '{' LISTA_VALORES '}' ';'
+			{
+				auto& escopo_atual = pilha_de_tabelas.back();
+				if (escopo_atual.find($2.label) != escopo_atual.end()) {
+					yyerror("Variavel ja declarada neste escopo: " + $2.label);
+				} else {
+					int total_elementos = stoi($4.label) * stoi($7.label);
+					if ($11.array_labels.size() > total_elementos) {
+						yyerror("Excesso de elementos na inicializacao da matriz.");
+					}
+
+					variavel var;
+					var.nome_usuario = $2.label;
+					var.nome_sistema = gentempcode("bool_array");
+					var.tipo = "bool";
+					var.eh_array = true;
+					var.eh_matriz = true;
+					var.colunas_matriz = stoi($7.label);
+					
+					escopo_atual[var.nome_usuario] = var;
+
+					string alocacao = "\t" + var.nome_sistema + " = (bool*) malloc(" + to_string(total_elementos) + " * sizeof(bool));\n";
+					string atribuicoes = "";
+
+					for (size_t i = 0; i < $11.array_labels.size(); i++) {
+						if ($11.array_tipos[i] != "bool") {
+							yyerror("Tipo incompativel na inicializacao da matriz.");
+						}
+						string temp_idx = gentempcode("bool");
+						atribuicoes += "\t" + temp_idx + " = " + to_string(i) + ";\n";
+						atribuicoes += "\t" + var.nome_sistema + "[" + temp_idx + "] = " + $11.array_labels[i] + ";\n";
+					}
+
+					$$.traducao = alocacao + $11.traducao + atribuicoes;
+				}
+			}
+			;
+LISTA_VALORES : LISTA_VALORES ',' L
+			{
+				$$.traducao = $1.traducao + $3.traducao;
+				
+				// Copia a lista anterior e adiciona o novo elemento
+				$$.array_labels = $1.array_labels;
+				$$.array_labels.push_back($3.label);
+				
+				$$.array_tipos = $1.array_tipos;
+				$$.array_tipos.push_back($3.tipo);
+			}
+			| L
+			{
+				$$.traducao = $1.traducao;
+				$$.array_labels.push_back($1.label);
+				$$.array_tipos.push_back($1.tipo);
 			}
 			;
 CASES       : CASE CASES
