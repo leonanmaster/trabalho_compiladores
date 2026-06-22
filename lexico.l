@@ -109,6 +109,9 @@ STRING_LITERAL "'"({LETRA}|{ESPACO}|{DIGITO})*"'"
 "continue"  { return TK_CONTINUE; }
 "break"     { return TK_BREAK; }
 
+"return"    { return TK_RETURN; }
+"void"      { return TK_VOID; }
+
 
 {ID}		{ yylval.label = yytext; return TK_ID; }
 

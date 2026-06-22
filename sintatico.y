@@ -37,6 +37,19 @@ struct variavel
     int colunas_matriz = 0;
 };
 
+struct funcao
+{
+	string nome;
+	string tipo_retorno;
+	vector<string> tipos_parametros;
+};
+
+map<string, funcao> funcoes;
+
+string funcao_atual = "";
+string codigo_funcoes = "";
+map<string, string> dono_temporario;
+
 // map<string, variavel> variaveis;
 vector<map<string, variavel>> pilha_de_tabelas;
 
@@ -93,7 +106,7 @@ int tamanho_string_literal(string literal);
 string gera_tamanho_string(string texto, string temp_tamanho);
 %}
 
-%token TK_NUM TK_ID TK_INT TK_NUM_FLOAT TK_CHAR TK_CARACTER TK_BOOL TK_BOOL_LIT TK_OPERADOR_RELACIONAL TK_NOT TK_AND TK_OR TK_FLOAT TK_CAST_INT TK_CAST_FLOAT TK_IF TK_ELSE	TK_WHILE TK_DO TK_FOR TK_CONTINUE TK_BREAK TK_SWITCH TK_CASE TK_DEFAULT TK_STRING_LITERAL TK_STRING TK_IN TK_SHIFT_RIGHT TK_OUT TK_SHIFT_LEFT TK_MAIS_MAIS TK_MENOS_MENOS TK_MAIS_IGUAL TK_MENOS_IGUAL TK_VEZES_IGUAL TK_DIVIDE_IGUAL
+%token TK_NUM TK_ID TK_INT TK_NUM_FLOAT TK_CHAR TK_CARACTER TK_BOOL TK_BOOL_LIT TK_OPERADOR_RELACIONAL TK_NOT TK_AND TK_OR TK_FLOAT TK_CAST_INT TK_CAST_FLOAT TK_IF TK_ELSE	TK_WHILE TK_DO TK_FOR TK_CONTINUE TK_BREAK TK_SWITCH TK_CASE TK_DEFAULT TK_STRING_LITERAL TK_STRING TK_IN TK_SHIFT_RIGHT TK_OUT TK_SHIFT_LEFT TK_MAIS_MAIS TK_MENOS_MENOS TK_MAIS_IGUAL TK_MENOS_IGUAL TK_VEZES_IGUAL TK_DIVIDE_IGUAL TK_RETURN TK_VOID
 
 %nonassoc LOWER_THAN_ELSE
 %nonassoc TK_ELSE
@@ -104,42 +117,134 @@ string gera_tamanho_string(string texto, string temp_tamanho);
 
 %%
 
-S 			: COMANDOS
+S 			: ITENS
 			{
 				codigo_gerado = "/*Compilador FOCA*/\n"
 								"#include <iostream>\n"
 								"#include <cstdlib>\n"
 								"#include <cstring>\n"
-								"using namespace std;\n\n"
-								"int main(void) {\n";
+								"using namespace std;\n\n";
+
+				codigo_gerado += codigo_funcoes;
+
+				codigo_gerado += "int main(void) {\n";
 				
-				for (int i = 1; i <= var_temp_qnt; i++){
+				for (int i = 1; i <= var_temp_qnt; i++) {
 					string nome_temp = "t" + to_string(i);
+
+					if (dono_temporario[nome_temp] != "") {
+						continue;
+					}
+
 					string tipo = tipos_temporarios[nome_temp];
 
 					if (tipo == "string") {
 						codigo_gerado += "\tchar* " + nome_temp + ";\n";
-					} else if (tipo == "string_buffer") {
+					}
+					else if (tipo == "string_buffer") {
 						codigo_gerado += "\tchar " + nome_temp + "[256];\n";
-					} else if (tipo == "int_array") {
+					}
+					else if (tipo == "int_array") {
 						codigo_gerado += "\tint* " + nome_temp + ";\n";
-					} else if (tipo == "float_array") {
+					}
+					else if (tipo == "float_array") {
 						codigo_gerado += "\tfloat* " + nome_temp + ";\n";
-					}else if (tipo == "bool_array") {
+					}
+					else if (tipo == "bool_array") {
 						codigo_gerado += "\tbool* " + nome_temp + ";\n";
-					} else {
+					}
+					else {
 						codigo_gerado += "\t" + tipo + " " + nome_temp + ";\n";
 					}
 				}
 
 				codigo_gerado += "\n";
-
 				codigo_gerado += $1.traducao;
 
 				codigo_gerado += "\treturn 0;"
-							"\n}\n";
+								"\n}\n";
 			}
 			;
+
+ITENS		: ITEM ITENS
+			{
+				$$.traducao = $1.traducao + $2.traducao;
+			}
+			| ITEM
+			{
+				$$.traducao = $1.traducao;
+			}
+			;
+
+ITEM		: FUNCAO
+			{
+				$$.traducao = "";
+			}
+			| COMANDO
+			{
+				$$.traducao = $1.traducao;
+			}
+			;
+
+FUNCAO		: PREPARA_FUNCAO CORPO_FUNCAO
+			{
+				string declaracoes_temporarias = "";
+
+				for (int i = 1; i <= var_temp_qnt; i++) {
+					string nome_temp = "t" + to_string(i);
+
+					if (dono_temporario[nome_temp] != $1.label) {
+						continue;
+					}
+
+					string tipo = tipos_temporarios[nome_temp];
+
+					if (tipo == "string") {
+						declaracoes_temporarias += "\tchar* " + nome_temp + ";\n";
+					}
+					else if (tipo == "string_buffer") {
+						declaracoes_temporarias += "\tchar " + nome_temp + "[256];\n";
+					}
+					else if (tipo == "int_array") {
+						declaracoes_temporarias += "\tint* " + nome_temp + ";\n";
+					}
+					else if (tipo == "float_array") {
+						declaracoes_temporarias += "\tfloat* " + nome_temp + ";\n";
+					}
+					else if (tipo == "bool_array") {
+						declaracoes_temporarias += "\tbool* " + nome_temp + ";\n";
+					}
+					else {
+						declaracoes_temporarias += "\t" + tipo + " " + nome_temp + ";\n";
+					}
+				}
+
+				codigo_funcoes += $1.traducao + " {\n";
+				codigo_funcoes += declaracoes_temporarias;
+
+				if (declaracoes_temporarias != "") {
+					codigo_funcoes += "\n";
+				}
+
+				codigo_funcoes += $2.traducao;
+				codigo_funcoes += "}\n\n";
+
+				desempilha_escopo();
+				funcao_atual = "";
+
+				$$.traducao = "";
+			}
+			;
+
+CORPO_FUNCAO	: '{' COMANDOS '}'
+				{
+					$$.traducao = $2.traducao;
+				}
+				| '{' '}'
+				{
+					$$.traducao = "";
+				}
+				;
 
 COMANDOS    : COMANDO COMANDOS	{$$.traducao = $1.traducao + $2.traducao;}
 		    | COMANDO 			{$$.traducao = $1.traducao;}
@@ -545,7 +650,10 @@ COMANDO     : TK_ID '=' L ';'
 				}
 				$$.traducao = "";
 			}
-			|L  	{$$.traducao = $1.traducao;}
+			|L  ';'
+			{
+				$$.traducao = $1.traducao;
+			}
 			| TK_ID '=' TK_CAST_FLOAT TK_ID ';'
 			{
 				variavel var_recebedora = obtem_variavel($1.label);
@@ -881,7 +989,6 @@ COMANDO     : TK_ID '=' L ';'
 					$$.traducao = $4.traducao + "\t" + var.nome_sistema + " = " + $4.label + ";\n";
 				}
 			}
-			;
 			| TK_BOOL TK_ID '=' L ';'
 			{
 				auto& escopo_atual = pilha_de_tabelas.back();
@@ -1135,7 +1242,296 @@ COMANDO     : TK_ID '=' L ';'
 					$$.traducao = alocacao + $11.traducao + atribuicoes;
 				}
 			}
+			| TK_ID '(' ARGUMENTOS_OPCIONAIS ')' ';'
+			{
+				auto it_funcao = funcoes.find($1.label);
+
+				if (it_funcao == funcoes.end()) {
+					yyerror("funcao nao declarada: " + $1.label);
+					$$.traducao = $3.traducao;
+				}
+				else {
+					funcao funcao_encontrada = it_funcao->second;
+
+					if (funcao_encontrada.tipos_parametros.size() !=
+						$3.array_tipos.size()) {
+						yyerror("quantidade de argumentos incompativel na funcao " +
+								$1.label + ": esperado " +
+								to_string(funcao_encontrada.tipos_parametros.size()) +
+								", recebido " +
+								to_string($3.array_tipos.size()));
+
+						$$.traducao = $3.traducao;
+					}
+					else {
+						bool tipos_corretos = true;
+
+						for (size_t i = 0;
+							 i < funcao_encontrada.tipos_parametros.size();
+							 i++) {
+							if (funcao_encontrada.tipos_parametros[i] !=
+								$3.array_tipos[i]) {
+								yyerror("tipo incompativel no argumento " +
+										to_string(i + 1) + " da funcao " +
+										$1.label + ": esperado " +
+										funcao_encontrada.tipos_parametros[i] +
+										", recebido " +
+										$3.array_tipos[i]);
+
+								tipos_corretos = false;
+							}
+						}
+
+						if (!tipos_corretos) {
+							$$.traducao = $3.traducao;
+						}
+						else {
+							string argumentos = "";
+
+							for (size_t i = 0;
+								 i < $3.array_labels.size();
+								 i++) {
+								if (i > 0) {
+									argumentos += ", ";
+								}
+
+								argumentos += $3.array_labels[i];
+							}
+
+							$$.traducao =
+								$3.traducao +
+								"\t" + $1.label +
+								"(" + argumentos + ");\n";
+						}
+					}
+				}
+			}
+			| TK_RETURN L ';'
+			{
+				if (funcao_atual == "") {
+					yyerror("comando 'return' usado fora de funcao");
+					$$.traducao = "";
+				}
+				else {
+					funcao funcao_encontrada = funcoes[funcao_atual];
+
+					if (funcao_encontrada.tipo_retorno == "void") {
+						yyerror("funcao void nao pode retornar um valor");
+						$$.traducao = "";
+					}
+					else if (funcao_encontrada.tipo_retorno != $2.tipo) {
+						yyerror("tipo retornado incompativel: a funcao espera " +
+								funcao_encontrada.tipo_retorno +
+								", mas recebeu " + $2.tipo);
+						$$.traducao = "";
+					}
+					else {
+						$$.traducao = $2.traducao +
+									 "\treturn " + $2.label + ";\n";
+					}
+				}
+			}
+			| TK_RETURN ';'
+			{
+				if (funcao_atual == "") {
+					yyerror("comando 'return' usado fora de funcao");
+					$$.traducao = "";
+				}
+				else {
+					funcao funcao_encontrada = funcoes[funcao_atual];
+
+					if (funcao_encontrada.tipo_retorno != "void") {
+						yyerror("a funcao " + funcao_atual +
+								" deve retornar um valor do tipo " +
+								funcao_encontrada.tipo_retorno);
+						$$.traducao = "";
+					}
+					else {
+						$$.traducao = "\treturn;\n";
+					}
+				}
+			}
 			;
+
+DADOS_CABECALHO	: TK_ID '(' PARAMETROS_OPCIONAIS ')'
+					{
+						$$.label = $1.label;
+						$$.array_tipos = $3.array_tipos;
+						$$.array_labels = $3.array_labels;
+						$$.traducao = $1.label + "(" + $3.traducao + ")";
+					}
+					;
+
+CABECALHO_FUNCAO	: TK_INT DADOS_CABECALHO
+					{
+						$$ = $2;
+						$$.tipo = "int";
+						$$.traducao = "int " + $2.traducao;
+					}
+					| TK_FLOAT DADOS_CABECALHO
+					{
+						$$ = $2;
+						$$.tipo = "float";
+						$$.traducao = "float " + $2.traducao;
+					}
+					| TK_CHAR DADOS_CABECALHO
+					{
+						$$ = $2;
+						$$.tipo = "char";
+						$$.traducao = "char " + $2.traducao;
+					}
+					| TK_BOOL DADOS_CABECALHO
+					{
+						$$ = $2;
+						$$.tipo = "bool";
+						$$.traducao = "bool " + $2.traducao;
+					}
+					| TK_STRING DADOS_CABECALHO
+					{
+						$$ = $2;
+						$$.tipo = "string";
+						$$.traducao = "char* " + $2.traducao;
+					}
+					| TK_VOID DADOS_CABECALHO
+					{
+						$$ = $2;
+						$$.tipo = "void";
+						$$.traducao = "void " + $2.traducao;
+					}
+					;
+
+PREPARA_FUNCAO	: CABECALHO_FUNCAO
+					{
+						if ($1.label == "main") {
+							yyerror("O nome main e reservado pelo compilador.");
+						}
+
+						if (funcoes.find($1.label) != funcoes.end()) {
+							yyerror("Funcao ja declarada: " + $1.label);
+						}
+
+						funcao nova_funcao;
+						nova_funcao.nome = $1.label;
+						nova_funcao.tipo_retorno = $1.tipo;
+						nova_funcao.tipos_parametros = $1.array_tipos;
+
+						funcoes[nova_funcao.nome] = nova_funcao;
+
+						funcao_atual = nova_funcao.nome;
+						empilha_escopo();
+
+						auto& escopo_funcao = pilha_de_tabelas.back();
+
+						for (size_t i = 0; i < $1.array_labels.size(); i++) {
+							string nome_parametro = $1.array_labels[i];
+
+							if (escopo_funcao.find(nome_parametro) != escopo_funcao.end()) {
+								yyerror("Parametro repetido: " + nome_parametro);
+							}
+
+							variavel parametro;
+							parametro.nome_usuario = nome_parametro;
+							parametro.nome_sistema = nome_parametro;
+							parametro.tipo = $1.array_tipos[i];
+
+							escopo_funcao[nome_parametro] = parametro;
+						}
+
+						$$ = $1;
+					}
+					;
+
+PARAMETRO	: TK_INT TK_ID
+			{
+				$$.array_tipos.clear();
+				$$.array_labels.clear();
+
+				$$.array_tipos.push_back("int");
+				$$.array_labels.push_back($2.label);
+
+				$$.traducao = "int " + $2.label;
+			}
+			| TK_FLOAT TK_ID
+			{
+				$$.array_tipos.clear();
+				$$.array_labels.clear();
+
+				$$.array_tipos.push_back("float");
+				$$.array_labels.push_back($2.label);
+
+				$$.traducao = "float " + $2.label;
+			}
+			| TK_CHAR TK_ID
+			{
+				$$.array_tipos.clear();
+				$$.array_labels.clear();
+
+				$$.array_tipos.push_back("char");
+				$$.array_labels.push_back($2.label);
+
+				$$.traducao = "char " + $2.label;
+			}
+			| TK_BOOL TK_ID
+			{
+				$$.array_tipos.clear();
+				$$.array_labels.clear();
+
+				$$.array_tipos.push_back("bool");
+				$$.array_labels.push_back($2.label);
+
+				$$.traducao = "bool " + $2.label;
+			}
+			| TK_STRING TK_ID
+			{
+				$$.array_tipos.clear();
+				$$.array_labels.clear();
+
+				$$.array_tipos.push_back("string");
+				$$.array_labels.push_back($2.label);
+
+				$$.traducao = "char* " + $2.label;
+			}
+			;
+
+
+PARAMETROS	: PARAMETROS ',' PARAMETRO
+			{
+				$$.array_tipos = $1.array_tipos;
+				$$.array_labels = $1.array_labels;
+
+				$$.array_tipos.push_back($3.array_tipos[0]);
+				$$.array_labels.push_back($3.array_labels[0]);
+
+				$$.traducao = $1.traducao + ", " + $3.traducao;
+			}
+			| PARAMETRO
+			{
+				$$ = $1;
+			}
+			;
+
+PARAMETROS_OPCIONAIS	: PARAMETROS
+						{
+							$$ = $1;
+						}
+						|
+						{
+							$$.traducao = "";
+							$$.array_tipos.clear();
+							$$.array_labels.clear();
+						}
+						;
+ARGUMENTOS_OPCIONAIS	: LISTA_VALORES
+						{
+							$$ = $1;
+						}
+						|
+						{
+							$$.traducao = "";
+							$$.array_labels.clear();
+							$$.array_tipos.clear();
+						}
+						;
 LISTA_VALORES : LISTA_VALORES ',' L
 			{
 				$$.traducao = $1.traducao + $3.traducao;
@@ -1301,6 +1697,89 @@ F 			: TK_NUM
 				tipos_temporarios[$$.label] = $$.tipo;
 				$$.traducao = "\t" + $$.label + " = " + $1.label + ";\n";
 			}
+			| TK_ID '(' ARGUMENTOS_OPCIONAIS ')'
+			{
+				auto it_funcao = funcoes.find($1.label);
+
+				if (it_funcao == funcoes.end()) {
+					yyerror("funcao nao declarada: " + $1.label);
+					$$.label = "";
+					$$.tipo = "";
+					$$.traducao = $3.traducao;
+				}
+				else {
+					funcao funcao_encontrada = it_funcao->second;
+
+					if (funcao_encontrada.tipos_parametros.size() !=
+						$3.array_tipos.size()) {
+						yyerror("quantidade de argumentos incompativel na funcao " +
+								$1.label + ": esperado " +
+								to_string(funcao_encontrada.tipos_parametros.size()) +
+								", recebido " +
+								to_string($3.array_tipos.size()));
+
+						$$.label = "";
+						$$.tipo = "";
+						$$.traducao = $3.traducao;
+					}
+					else {
+						bool tipos_corretos = true;
+
+						for (size_t i = 0;
+							 i < funcao_encontrada.tipos_parametros.size();
+							 i++) {
+							if (funcao_encontrada.tipos_parametros[i] !=
+								$3.array_tipos[i]) {
+								yyerror("tipo incompativel no argumento " +
+										to_string(i + 1) + " da funcao " +
+										$1.label + ": esperado " +
+										funcao_encontrada.tipos_parametros[i] +
+										", recebido " +
+										$3.array_tipos[i]);
+
+								tipos_corretos = false;
+							}
+						}
+
+						if (!tipos_corretos) {
+							$$.label = "";
+							$$.tipo = "";
+							$$.traducao = $3.traducao;
+						}
+						else if (funcao_encontrada.tipo_retorno == "void") {
+							yyerror("funcao void nao pode ser usada em uma expressao: " +
+									$1.label);
+
+							$$.label = "";
+							$$.tipo = "";
+							$$.traducao = $3.traducao;
+						}
+						else {
+							string argumentos = "";
+
+							for (size_t i = 0;
+								 i < $3.array_labels.size();
+								 i++) {
+								if (i > 0) {
+									argumentos += ", ";
+								}
+
+								argumentos += $3.array_labels[i];
+							}
+
+							$$.label =
+								gentempcode(funcao_encontrada.tipo_retorno);
+							$$.tipo =
+								funcao_encontrada.tipo_retorno;
+
+							$$.traducao =
+								$3.traducao +
+								"\t" + $$.label + " = " +
+								$1.label + "(" + argumentos + ");\n";
+						}
+					}
+				}
+			}
 			| TK_ID
 			{
 				/* VERIFICAR SE JÁ ESTÁ DECLARADA */
@@ -1460,6 +1939,7 @@ string gentempcode(string tipo)
 	var_temp_qnt++;
 	string nome = "t" + to_string(var_temp_qnt);
 	tipos_temporarios[nome] = tipo;
+	dono_temporario[nome] = funcao_atual;
 
 	return nome;
 }

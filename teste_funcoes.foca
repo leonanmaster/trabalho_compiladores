@@ -1,0 +1,17 @@
+int soma(int a, int b) {
+	return a + b;
+}
+
+float metade(float valor) {
+	return valor / 2.0;
+}
+
+void mostrar(int valor) {
+	out << valor;
+	return;
+}
+
+int resultado;
+resultado = soma(10, 20);
+
+mostrar(resultado);

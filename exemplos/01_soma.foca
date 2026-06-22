@@ -1,9 +1,6 @@
-// Este e um vetor de teste
-int vet[3] = {1, 2, 3};
+void mostrar(int valor) {
+	out << valor;
+	return;
+}
 
-/* Este bloco 
-   inteiro deve ser 
-   ignorado pelo Flex 
-*/
-int a;
-a = vet[0] + 1; // Soma 1
+mostrar(2.5);
