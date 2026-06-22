@@ -4,6 +4,8 @@
 
 %option noyywrap
 
+%x COMENTARIO
+
 ESPACO [ \t]
 DIGITO [0-9]
 LETRA [a-zA-Z]
@@ -31,6 +33,13 @@ STRING_LITERAL "'"({LETRA}|{ESPACO}|{DIGITO})*"'"
 "\n"		{ linha++; }
 
 {DELIM} 	{}
+
+"//".* { /* Ignora comentário de uma linha*/ }
+
+"/*"            { BEGIN(COMENTARIO); }
+<COMENTARIO>"*/" { BEGIN(INITIAL); }
+<COMENTARIO>\n   { linha++; }
+<COMENTARIO>.    { }
 
 "++"    { return TK_MAIS_MAIS; }
 "--"    { return TK_MENOS_MENOS; }

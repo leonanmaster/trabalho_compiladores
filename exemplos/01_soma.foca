@@ -1,6 +1,9 @@
-int vet[3] = {10, 20, 30};
-int mat[2][2] = {100, 200, 300, 400};
-int somavet;
-int somamat;
-somavet = vet[0] + vet[2];
-somamat = mat[1][0] + mat[1][1];
+// Este e um vetor de teste
+int vet[3] = {1, 2, 3};
+
+/* Este bloco 
+   inteiro deve ser 
+   ignorado pelo Flex 
+*/
+int a;
+a = vet[0] + 1; // Soma 1
