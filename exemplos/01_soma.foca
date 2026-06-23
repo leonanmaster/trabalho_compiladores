@@ -1,5 +1,8 @@
 void mostrar(string valor) {
+	int vet[3] = {10, 20, 30};
+	string b = 'o';
 	out << valor;
+	out << vet[0];
 	return;
 }
 

@@ -218,6 +218,7 @@ ITEM		: FUNCAO
 FUNCAO		: PREPARA_FUNCAO CORPO_FUNCAO
 			{
 				string declaracoes_temporarias = "";
+				string frees = "";
 
 				for (int i = 1; i <= var_temp_qnt; i++) {
 					string nome_temp = "t" + to_string(i);
@@ -247,6 +248,32 @@ FUNCAO		: PREPARA_FUNCAO CORPO_FUNCAO
 						declaracoes_temporarias += "\t" + tipo + " " + nome_temp + ";\n";
 					}
 				}
+				for (int i = 1; i <= var_temp_qnt; i++) {
+					string nome_temp = "t" + to_string(i);
+
+					if (dono_temporario[nome_temp] != $1.label) {
+						continue;
+					}
+
+					string tipo = tipos_temporarios[nome_temp];
+
+					if (tipo == "string") {
+						frees += "\tfree(" + nome_temp + ");\n";
+					}
+					else if (tipo == "string_buffer") {
+					}
+					else if (tipo == "int_array") {
+						frees += "\tfree(" + nome_temp + ");\n";
+					}
+					else if (tipo == "float_array") {
+						frees += "\tfree(" + nome_temp + ");\n";
+					}
+					else if (tipo == "bool_array") {
+						frees += "\tfree(" + nome_temp + ");\n";
+					}
+					else {
+					}
+				}
 
 				codigo_funcoes += $1.traducao + " {\n";
 				codigo_funcoes += declaracoes_temporarias;
@@ -256,6 +283,7 @@ FUNCAO		: PREPARA_FUNCAO CORPO_FUNCAO
 				}
 
 				codigo_funcoes += $2.traducao;
+				codigo_funcoes += frees;
 				codigo_funcoes += "}\n\n";
 
 				desempilha_escopo();
