@@ -160,6 +160,35 @@ S 			: ITENS
 
 				codigo_gerado += "\n";
 				codigo_gerado += $1.traducao;
+				codigo_gerado += "\n";
+
+				for (int i = 1; i <= var_temp_qnt; i++) {
+					string nome_temp = "t" + to_string(i);
+
+					if (dono_temporario[nome_temp] != "") {
+						continue;
+					}
+
+					string tipo = tipos_temporarios[nome_temp];
+
+					if (tipo == "string") {
+						codigo_gerado += "\tfree(" + nome_temp + ");\n";
+					}
+					else if (tipo == "string_buffer") {
+					}
+					else if (tipo == "int_array") {
+						codigo_gerado += "\tfree(" + nome_temp + ");\n";
+
+					}
+					else if (tipo == "float_array") {
+						codigo_gerado += "\tfree(" + nome_temp + ");\n";
+					}
+					else if (tipo == "bool_array") {
+						codigo_gerado += "\tfree(" + nome_temp + ");\n";
+					}
+					else {
+					}
+				}
 
 				codigo_gerado += "\treturn 0;"
 								"\n}\n";

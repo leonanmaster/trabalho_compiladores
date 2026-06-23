@@ -1,17 +1,7 @@
-int a = 0;
-int b = 0;
-int c = 0;
-while (a < 10) {
-	b = 0;
-	while (b < 10) {
-		c = 0;
-		while (c < 10) {
-			c = c + 1;
-			out << c;
-			if (c == 2) {
-				break 2;
-			}
-		}
-	}
-	a = a + 1;
+void mostrar(string valor) {
+	out << valor;
+	return;
 }
+
+string a = 'oi';
+mostrar(a);
