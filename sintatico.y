@@ -106,7 +106,7 @@ int tamanho_string_literal(string literal);
 string gera_tamanho_string(string texto, string temp_tamanho);
 %}
 
-%token TK_NUM TK_ID TK_INT TK_NUM_FLOAT TK_CHAR TK_CARACTER TK_BOOL TK_BOOL_LIT TK_OPERADOR_RELACIONAL TK_NOT TK_AND TK_OR TK_FLOAT TK_CAST_INT TK_CAST_FLOAT TK_IF TK_ELSE	TK_WHILE TK_DO TK_FOR TK_CONTINUE TK_BREAK TK_SWITCH TK_CASE TK_DEFAULT TK_STRING_LITERAL TK_STRING TK_IN TK_SHIFT_RIGHT TK_OUT TK_SHIFT_LEFT TK_MAIS_MAIS TK_MENOS_MENOS TK_MAIS_IGUAL TK_MENOS_IGUAL TK_VEZES_IGUAL TK_DIVIDE_IGUAL TK_RETURN TK_VOID
+%token TK_NUM TK_ID TK_INT TK_NUM_FLOAT TK_CHAR TK_CARACTER TK_BOOL TK_BOOL_LIT TK_OPERADOR_RELACIONAL TK_NOT TK_AND TK_OR TK_FLOAT TK_CAST_INT TK_CAST_FLOAT TK_IF TK_ELSE	TK_WHILE TK_DO TK_FOR TK_CONTINUE TK_BREAK TK_SWITCH TK_CASE TK_DEFAULT TK_STRING_LITERAL TK_STRING TK_IN TK_SHIFT_RIGHT TK_OUT TK_SHIFT_LEFT TK_MAIS_MAIS TK_MENOS_MENOS TK_MAIS_IGUAL TK_MENOS_IGUAL TK_VEZES_IGUAL TK_DIVIDE_IGUAL TK_RETURN TK_VOID TK_ALL
 
 %nonassoc LOWER_THAN_ELSE
 %nonassoc TK_ELSE
@@ -607,6 +607,61 @@ COMANDO     : TK_ID '=' L ';'
 					escopo_atual[var.nome_usuario] = var;
 				}
 				$$.traducao = "";
+			}
+			| TK_BREAK TK_NUM ';'
+			{
+				int niveis = 0;
+				bool numero_valido = true;
+
+				try {
+					niveis = stoi($2.label);
+				} catch (...) {
+					yyerror("quantidade invalida no comando 'break n'");
+					$$.traducao = "";
+					numero_valido = false;
+				}
+
+				if (!numero_valido) {
+					$$.traducao = "";
+				}
+				else if (niveis <= 0) {
+					yyerror("a quantidade de niveis do 'break n' deve ser maior que zero");
+					$$.traducao = "";
+				}
+				else if ((size_t)niveis > pilha_labels_fim.size()) {
+					yyerror(
+						"'break " + $2.label + "' excede os " +
+						to_string(pilha_labels_fim.size()) +
+						" niveis interrompiveis ativos"
+					);
+
+					$$.traducao = "";
+				}
+				else {
+					size_t indice =
+						pilha_labels_fim.size() - (size_t)niveis;
+
+					$$.traducao =
+						"\tgoto " +
+						pilha_labels_fim[indice] +
+						";\n";
+				}
+			}
+			| TK_BREAK TK_ALL ';'
+			{
+				if (pilha_labels_fim.empty()) {
+					yyerror(
+						"comando 'break all' usado fora de estrutura interrompivel"
+					);
+
+					$$.traducao = "";
+				}
+				else {
+					$$.traducao =
+						"\tgoto " +
+						pilha_labels_fim.front() +
+						";\n";
+				}
 			}
 			| TK_FLOAT TK_ID ';'
 			{

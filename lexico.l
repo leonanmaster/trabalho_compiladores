@@ -108,6 +108,7 @@ STRING_LITERAL "'"({LETRA}|{ESPACO}|{DIGITO})*"'"
 
 "continue"  { return TK_CONTINUE; }
 "break"     { return TK_BREAK; }
+"all"       { return TK_ALL; }
 
 "return"    { return TK_RETURN; }
 "void"      { return TK_VOID; }
