@@ -1,10 +1,13 @@
-void mostrar(string valor) {
-	int vet[3] = {10, 20, 30};
-	string b = 'o';
-	out << valor;
-	out << vet[0];
-	return;
-}
-
-string a = 'oi';
-mostrar(a);
+int b;
+b = 10;
+b += 5;
+b -= 2;
+b *= 3;
+b /= 2;
+b--;
+b++;
+b = 1 + (1 / 8 ^ 2) - 98;
+bool c;
+c = b < 10;
+bool d;
+d = true and c;

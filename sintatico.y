@@ -89,6 +89,8 @@ map<pair<string,string>, string> tabela_de_conversao = {
 	/* caso nao queria que seja possivel operar dois tipos, deixe o resultado como string vazia */
 };
 
+atributos gera_exponenciacao(atributos base, atributos expoente);
+
 
 int yylex(void);
 void yyerror(string);
@@ -123,6 +125,7 @@ S 			: ITENS
 								"#include <iostream>\n"
 								"#include <cstdlib>\n"
 								"#include <cstring>\n"
+								"#include <cmath>\n"
 								"using namespace std;\n\n";
 
 				codigo_gerado += codigo_funcoes;
@@ -310,10 +313,35 @@ COMANDOS    : COMANDO COMANDOS	{$$.traducao = $1.traducao + $2.traducao;}
 COMANDO     : TK_ID '=' L ';'
 			{
 				variavel var_recebedora = obtem_variavel($1.label);
-				if (var_recebedora.tipo != $3.tipo) {
-					yyerror("tipo do resultado da operação é incompatível com o tipo esperado: " + $3.tipo + " e " + var_recebedora.tipo);
-				} else {
-					$$.traducao = $3.traducao + "\t" + var_recebedora.nome_sistema + " = " + $3.label + ";\n";
+
+				if (var_recebedora.tipo == $3.tipo) {
+					$$.traducao =
+						$3.traducao +
+						"\t" + var_recebedora.nome_sistema +
+						" = " + $3.label + ";\n";
+				}
+				else if (
+					var_recebedora.tipo == "float" &&
+					$3.tipo == "int"
+				) {
+					string temp_convertida = gentempcode("float");
+
+					$$.traducao =
+						$3.traducao +
+						"\t" + temp_convertida +
+						" = (float) " + $3.label + ";\n" +
+						"\t" + var_recebedora.nome_sistema +
+						" = " + temp_convertida + ";\n";
+				}
+				else {
+					yyerror(
+						"tipo do resultado da operacao e incompativel "
+						"com o tipo esperado: " +
+						$3.tipo + " e " +
+						var_recebedora.tipo
+					);
+
+					$$.traducao = "";
 				}
 			}
 			| TK_INT TK_ID '[' TK_NUM ']' ';'
@@ -1086,19 +1114,52 @@ COMANDO     : TK_ID '=' L ';'
 				auto& escopo_atual = pilha_de_tabelas.back();
 
 				if (escopo_atual.find($2.label) != escopo_atual.end()) {
-					yyerror("variavel ja declarada neste escopo: " + $2.label);
-				} else {
+					yyerror(
+						"variavel ja declarada neste escopo: " +
+						$2.label
+					);
+
+					$$.traducao = "";
+				}
+				else {
 					variavel var;
 					var.nome_usuario = $2.label;
 					var.nome_sistema = gentempcode("float");
 					var.tipo = "float";
+
 					escopo_atual[var.nome_usuario] = var;
 
-					if (var.tipo != $4.tipo) {
-						yyerror("tipo do resultado da operação é incompatível com o tipo esperado: " + $4.tipo + " e " + var.tipo);
+					if ($4.tipo == "float") {
+						$$.traducao =
+							$4.traducao +
+							"\t" + var.nome_sistema +
+							" = " + $4.label + ";\n";
 					}
+					else if ($4.tipo == "int") {
+						string temp_convertida =
+							gentempcode("float");
 
-					$$.traducao = $4.traducao + "\t" + var.nome_sistema + " = " + $4.label + ";\n";
+						$$.traducao =
+							$4.traducao +
+
+							"\t" + temp_convertida +
+							" = (float) " +
+							$4.label + ";\n" +
+
+							"\t" + var.nome_sistema +
+							" = " +
+							temp_convertida + ";\n";
+					}
+					else {
+						yyerror(
+							"tipo do resultado da operacao e incompatível "
+							"com o tipo esperado: " +
+							$4.tipo + " e " +
+							var.tipo
+						);
+
+						$$.traducao = "";
+					}
 				}
 			}
 			| TK_BOOL TK_ID '=' L ';'
@@ -1778,23 +1839,29 @@ E 			:E '-' T
 			}
 			;
 
-T 			: T '*' F
+T 			: T '*' P
 			{
 				$$ = gera_operacao($$, $1, $3, "*");
 			}
 			
-			| T '/' F
+			| T '/' P
 			{
 				$$ = gera_operacao($$, $1, $3, "/");
 			}
-			| F
+			| P
 			{
-				$$.label = $1.label;
-				$$.traducao = $1.traducao;
-				$$.tipo = $1.tipo;
+				$$ = $1;
 			}
 			;
-
+P		    : P '^' F
+    		{
+				$$ = gera_exponenciacao($1, $3);
+			}
+			| F
+			{
+				$$ = $1;
+			}
+			;
 F 			: TK_NUM
 			{
 				$$.label = gentempcode("int");
@@ -2262,6 +2329,53 @@ atributos gera_operacao(atributos recebedor_resultado, atributos esq, atributos 
 	
 
 	resultado.traducao += "\t" + resultado.label + " = " + label_esq + " " + operador + " " + label_dir + ";\n";
+
+	return resultado;
+}
+
+atributos gera_exponenciacao(
+	atributos base,
+	atributos expoente
+) {
+	atributos resultado;
+
+	if (
+		(base.tipo != "int" && base.tipo != "float") ||
+		(expoente.tipo != "int" && expoente.tipo != "float")
+	) {
+		yyerror(
+			"operador de exponenciacao '^' exige operandos numericos, "
+			"mas foram fornecidos: " +
+			base.tipo + " e " + expoente.tipo
+		);
+
+		return resultado;
+	}
+
+	resultado.tipo =
+		tabela_de_conversao[{base.tipo, expoente.tipo}];
+
+	// pow sempre retorna double
+	string temporaria_pow = gentempcode("float");
+
+	resultado.label = gentempcode(resultado.tipo);
+
+	resultado.traducao =
+		base.traducao +
+		expoente.traducao;
+
+	// Primeiro realiza a exponenciação
+	resultado.traducao +=
+		"\t" + temporaria_pow +
+		" = pow(" +
+		base.label + ", " +
+		expoente.label + ");\n";
+
+	// Depois converte para o tipo final
+	resultado.traducao +=
+		"\t" + resultado.label +
+		" = (" + resultado.tipo + ") " +
+		temporaria_pow + ";\n";
 
 	return resultado;
 }
