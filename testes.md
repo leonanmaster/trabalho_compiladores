@@ -5,9 +5,10 @@ a = 10;
 b = a + 5 * 2 ^ 2;
 
 float f;
-f = (float) b + 2.5;
+f = (float) b;
 
-char c;
+
+string c;
 c = 'x';
 
 bool ok;
@@ -132,4 +133,38 @@ int multiplicar(int p1, int p2) {
 
 int principal;
 principal = multiplicar(5, 4);
+# Teste 11: Interrupcao de multiplos niveis com break n
+int i;
+int j;
+int k;
+int execucoes;
+execucoes = 0;
+
+for (i = 0; i < 3; i++) {
+    for (j = 0; j < 3; j++) {
+        for (k = 0; k < 3; k++) {
+            execucoes++;
+            if (k == 1) {
+                break 2;
+            }
+        }
+    }
+}
+# Teste 12: Interrupcao total com break all
+int x;
+int y;
+int contador;
+contador = 0;
+
+while (x < 10) {
+    y = 0;
+    while (y < 10) {
+        contador++;
+        if (x == 5 and y == 5) {
+            break all;
+        }
+        y++;
+    }
+    x++;
+}
 #
